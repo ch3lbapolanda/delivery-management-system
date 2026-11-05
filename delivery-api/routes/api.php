@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\OrderController;
 
 // Public endpoints
 Route::post('/register', [AuthController::class, 'register']);
@@ -13,6 +14,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Authentication
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+
+    //OrderController
+    Route::middleware('role:customer')->group(function () {
+      Route::post('/orders', [OrderController::class, 'store']);
+    });
 
     // Admin dashboard
     Route::get('/admin/dashboard', function () {
