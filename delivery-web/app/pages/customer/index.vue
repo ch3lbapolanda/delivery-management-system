@@ -1,16 +1,80 @@
 
+
 <script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
 })
 
+interface Order {
+  id: number
+  order_number: string
+  delivery_type: string
+  status: string
+  sender_name: string
+  recipient_name: string
+  pickup_address: string
+  delivery_address: string
+  created_at: string
+}
+
+interface OrderResponse {
+  message: string
+  data: {
+    data: Order[]
+    current_page: number
+    last_page: number
+    per_page: number
+    total: number
+  }
+}
+
 const { user, logout } = useAuth()
+const api = useApi()
+
+const orders = ref<Order[]>([])
+const loading = ref(false)
+const errorMessage = ref('')
+
+const totalOrders = computed(() => orders.value.length)
+
+const inTransitOrders = computed(() =>
+  orders.value.filter(order =>
+    ['picked_up', 'in_transit'].includes(order.status)
+  ).length
+)
+
+const cancelledOrders = computed(() =>
+  orders.value.filter(order =>
+    order.status === 'cancelled'
+  ).length
+)
+
+const fetchOrders = async () => {
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const response = await api<OrderResponse>('/orders')
+
+    orders.value = response.data.data
+  } catch (error: any) {
+    errorMessage.value =
+      error.data?.message || 'Failed to load orders.'
+  } finally {
+    loading.value = false
+  }
+}
 
 const handleLogout = async () => {
   await logout()
   await navigateTo('/')
 }
+
+onMounted(() => {
+  fetchOrders()
+})
 </script>
+
 
 <template>
   <main class="dashboard">
@@ -35,21 +99,23 @@ const handleLogout = async () => {
       <p>Manage and track your deliveries in one place.</p>
     </section>
 
-    <section class="stats">
-      <article class="stat-card">
-        <span class="stat-icon">▣</span>
-        <p>TOTAL ORDERS</p>
-        <h3>0</h3>
-        <small>Your delivery history</small>
-      </article>
 
-      <article class="stat-card">
-        <span class="stat-icon">↗</span>
-        <p>IN TRANSIT</p>
-        <h3>0</h3>
-        <small>Currently on the way</small>
-      </article>
-    </section>
+<section class="stats">
+  <article class="stat-card">
+    <span class="stat-icon">▣</span>
+    <p>TOTAL ORDERS</p>
+    <h3>{{ totalOrders }}</h3>
+    <small>Your delivery history</small>
+  </article>
+
+  <article class="stat-card">
+    <span class="stat-icon">↗</span>
+    <p>IN TRANSIT</p>
+    <h3>{{ inTransitOrders }}</h3>
+    <small>Currently on the way</small>
+  </article>
+</section>
+
 
     <section class="actions">
       <div class="section-heading">
@@ -76,18 +142,74 @@ const handleLogout = async () => {
       </button>
     </section>
 
-    <section class="recent">
-      <div class="section-heading">
-        <h3>Recent deliveries</h3>
-        <span>HISTORY</span>
+
+<section class="recent">
+  <div class="section-heading">
+    <h3>Recent deliveries</h3>
+    <span>HISTORY</span>
+  </div>
+
+  <div v-if="loading" class="empty-state">
+    <h4>Loading deliveries...</h4>
+  </div>
+
+  <div v-else-if="errorMessage" class="empty-state">
+    <h4>Unable to load deliveries</h4>
+    <p>{{ errorMessage }}</p>
+    <button @click="fetchOrders">Try again</button>
+  </div>
+
+  <div v-else-if="orders.length === 0" class="empty-state">
+    <div class="empty-icon">☾</div>
+    <h4>No deliveries yet</h4>
+    <p>Your delivery activity will appear here.</p>
+  </div>
+
+  <div v-else class="order-list">
+    <article
+      v-for="order in orders"
+      :key="order.id"
+      class="order-card"
+    >
+      <div class="order-header">
+        <h4>{{ order.order_number }}</h4>
+
+        <span
+          class="status"
+          :class="`status-${order.status}`"
+        >
+          {{ order.status.replace('_', ' ') }}
+        </span>
       </div>
 
-      <div class="empty-state">
-        <div class="empty-icon">☾</div>
-        <h4>No deliveries yet</h4>
-        <p>Your delivery activity will appear here.</p>
+      <div class="order-route">
+        <div class="route-item">
+          <span class="route-dot pickup"></span>
+          <div>
+            <small>Pickup</small>
+            <p>{{ order.pickup_address }}</p>
+          </div>
+        </div>
+
+        <div class="route-line"></div>
+
+        <div class="route-item">
+          <span class="route-dot delivery"></span>
+          <div>
+            <small>Delivery</small>
+            <p>{{ order.delivery_address }}</p>
+          </div>
+        </div>
       </div>
-    </section>
+
+      <div class="order-footer">
+        <span>{{ order.delivery_type }}</span>
+        <strong>{{ order.status.toUpperCase() }}</strong>
+      </div>
+    </article>
+  </div>
+</section>
+
 
     <footer>
       <span class="status-dot"></span>
@@ -97,229 +219,3 @@ const handleLogout = async () => {
 
   </main>
 </template>
-
-<style scoped>
-.dashboard {
-  min-height: 100vh;
-  box-sizing: border-box;
-  padding: 28px 20px;
-  background:
-    radial-gradient(circle at 90% 5%, #182943 0, transparent 35%),
-    #080e19;
-  color: #f8fafc;
-  font-family: Arial, sans-serif;
-}
-
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 55px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.brand-icon {
-  width: 43px;
-  height: 43px;
-  border: 1px solid #eab44b;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  color: #f5bd50;
-  font-size: 27px;
-}
-
-.brand h1 {
-  font-size: 17px;
-  letter-spacing: 1.5px;
-  margin: 0;
-}
-
-.brand h1 span {
-  color: #f5bd50;
-}
-
-.brand p {
-  font-size: 8px;
-  letter-spacing: 1.5px;
-  color: #8290a5;
-  margin: 5px 0 0;
-}
-
-.logout-btn {
-  background: transparent;
-  border: 1px solid #34445b;
-  color: #cbd5e1;
-  border-radius: 8px;
-  padding: 9px 12px;
-}
-
-.welcome {
-  margin-bottom: 32px;
-}
-
-.eyebrow,
-.section-heading span {
-  color: #f5bd50;
-  font-size: 9px;
-  font-weight: bold;
-  letter-spacing: 2px;
-}
-
-.welcome h2 {
-  font-size: 34px;
-  line-height: 1.2;
-  margin: 13px 0;
-}
-
-.welcome h2 span {
-  color: #f5bd50;
-}
-
-.welcome p {
-  color: #94a3b8;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 38px;
-}
-
-.stat-card {
-  background: #111c2d;
-  border: 1px solid #28364a;
-  border-radius: 13px;
-  padding: 17px;
-}
-
-.stat-icon,
-.action-icon {
-  color: #f5bd50;
-  font-size: 23px;
-}
-
-.stat-card p {
-  color: #94a3b8;
-  font-size: 9px;
-  letter-spacing: 1px;
-  margin-top: 15px;
-}
-
-.stat-card h3 {
-  font-size: 29px;
-  margin: 8px 0;
-}
-
-.stat-card small,
-.action-card small {
-  color: #8290a5;
-  font-size: 10px;
-}
-
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.section-heading h3 {
-  font-size: 17px;
-  margin: 0;
-}
-
-.actions {
-  margin-bottom: 38px;
-}
-
-.action-card {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 17px;
-  margin-bottom: 11px;
-  border-radius: 12px;
-  border: 1px solid #28364a;
-  background: #111c2d;
-  color: #f8fafc;
-  text-align: left;
-}
-
-.action-card > span:nth-child(2) {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.action-card strong {
-  font-size: 13px;
-}
-
-.arrow {
-  margin-left: auto;
-  color: #f5bd50;
-  font-size: 20px;
-}
-
-.empty-state {
-  background: #111c2d;
-  border: 1px dashed #34445b;
-  border-radius: 13px;
-  text-align: center;
-  padding: 30px 15px;
-}
-
-.empty-icon {
-  color: #f5bd50;
-  font-size: 30px;
-}
-
-.empty-state h4 {
-  margin: 12px 0 7px;
-}
-
-.empty-state p {
-  color: #8290a5;
-  font-size: 11px;
-}
-
-footer {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 38px;
-  color: #8290a5;
-  font-size: 8px;
-  letter-spacing: 1px;
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  background: #4ade80;
-  border-radius: 50%;
-}
-
-.copyright {
-  margin-left: auto;
-  font-size: 7px;
-}
-
-@media (min-width: 700px) {
-  .dashboard {
-    max-width: 850px;
-    margin: auto;
-    padding: 45px;
-  }
-}
-</style>
