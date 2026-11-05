@@ -79,7 +79,47 @@ class OrderController extends Controller
             'data' => $orders,
         ]);
     }
+  
+    public function cancel(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'cancellation_reason' => 'required|string|max:1000',
+        ]);
     
+        $order = DB::transaction(function () use ($request, $id, $validated) {
+            $order = $request->user()
+                ->customerOrders()
+                ->whereKey($id)
+                ->lockForUpdate()
+                ->firstOrFail();
+    
+            if (!in_array($order->status, ['pending', 'assigned'])) {
+                abort(422, 'This order cannot be cancelled.');
+            }
+    
+            $oldStatus = $order->status;
+    
+            $order->update([
+                'status' => 'cancelled',
+                'cancellation_reason' => $validated['cancellation_reason'],
+            ]);
+    
+            $order->statusHistories()->create([
+                'changed_by' => $request->user()->id,
+                'old_status' => $oldStatus,
+                'new_status' => 'cancelled',
+                'note' => $validated['cancellation_reason'],
+            ]);
+    
+            return $order->load('statusHistories');
+        });
+    
+        return response()->json([
+            'message' => 'Order cancelled successfully.',
+            'data' => $order,
+        ]);
+    }
+
     public function show(Request $request, int $id)
     {
         $order = $request->user()
