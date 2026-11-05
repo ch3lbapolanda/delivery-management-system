@@ -18,14 +18,29 @@ const handleLogin = async () => {
       password.value
     )
 
-    successMessage.value = response.message
+    const roleRoutes: Record<string, string> = {
+      admin: '/admin',
+      dispatcher: '/dispatcher',
+      courier: '/courier',
+      customer: '/customer'
+    }
 
-    console.log('User:', response.user)
-    console.log('Role:', response.user.role.slug)
+    const destination = roleRoutes[response.user.role.slug]
+
+    if (!destination) {
+      throw new Error('Role pengguna tidak dikenali.')
+    }
+
+    console.log('Login berhasil:', response.user)
+    console.log('Redirect ke:', destination)
+
+    await navigateTo(destination)
 
   } catch (error: any) {
     errorMessage.value =
-      error.data?.message || 'Login gagal. Periksa email dan password.'
+      error.data?.message ||
+      error.message ||
+      'Login gagal. Periksa email dan password.'
   } finally {
     loading.value = false
   }
