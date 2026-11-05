@@ -66,5 +66,32 @@ class OrderController extends Controller
             'data' => $order->load('statusHistories'),
         ], 201);
     }
+  
+    public function index(Request $request)
+    {
+        $orders = $request->user()
+            ->customerOrders()
+            ->latest()
+            ->paginate(10);
+    
+        return response()->json([
+            'message' => 'Orders retrieved successfully.',
+            'data' => $orders,
+        ]);
+    }
+    
+    public function show(Request $request, int $id)
+    {
+        $order = $request->user()
+            ->customerOrders()
+            ->with('statusHistories')
+            ->findOrFail($id);
+    
+        return response()->json([
+            'message' => 'Order retrieved successfully.',
+            'data' => $order,
+        ]);
+    }
+
 }
 

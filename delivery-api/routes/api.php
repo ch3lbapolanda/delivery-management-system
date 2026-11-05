@@ -18,8 +18,10 @@ Route::middleware('auth:sanctum')->group(function () {
     //OrderController
     Route::middleware('role:customer')->group(function () {
       Route::post('/orders', [OrderController::class, 'store']);
+      Route::get('/orders', [OrderController::class, 'index']);
+      Route::get('/orders/{id}', [OrderController::class, 'show']);
     });
-
+    
     // Admin dashboard
     Route::get('/admin/dashboard', function () {
         return response()->json([
