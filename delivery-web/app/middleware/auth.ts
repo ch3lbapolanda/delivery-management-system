@@ -23,7 +23,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo('/')
   }
 
-  if (to.path !== allowedRoute) {
+  if (
+    to.path !== allowedRoute &&
+    !to.path.startsWith(`${allowedRoute}/`)
+  ) {
     return navigateTo(allowedRoute)
   }
 })
