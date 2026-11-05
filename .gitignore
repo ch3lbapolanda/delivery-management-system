@@ -1,0 +1,29 @@
+# Laravel secrets
+delivery-api/.env
+delivery-api/.env.*
+!delivery-api/.env.example
+
+# Laravel dependencies and runtime
+delivery-api/vendor/
+delivery-api/node_modules/
+delivery-api/storage/logs/*
+delivery-api/storage/framework/cache/*
+delivery-api/storage/framework/sessions/*
+delivery-api/storage/framework/views/*
+delivery-api/bootstrap/cache/*.php
+
+# Nuxt
+delivery-web/node_modules/
+delivery-web/.nuxt/
+delivery-web/.output/
+delivery-web/.data/
+delivery-web/dist/
+
+# Frontend environment secrets
+delivery-web/.env
+delivery-web/.env.*
+!delivery-web/.env.example
+
+# General
+*.log
+.DS_Store

@@ -1,0 +1,45 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+
+// Public endpoints
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+
+// Protected endpoints
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Authentication
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/me', [AuthController::class, 'me']);
+
+    // Admin dashboard
+    Route::get('/admin/dashboard', function () {
+        return response()->json([
+            'message' => 'Welcome Admin',
+        ]);
+    })->middleware('role:admin');
+
+    // Dispatcher dashboard
+    Route::get('/dispatcher/dashboard', function () {
+        return response()->json([
+            'message' => 'Welcome Dispatcher',
+        ]);
+    })->middleware('role:admin,dispatcher');
+
+    // Courier dashboard
+    Route::get('/courier/dashboard', function () {
+        return response()->json([
+            'message' => 'Welcome Courier',
+        ]);
+    })->middleware('role:admin,courier');
+
+    // Customer dashboard
+    Route::get('/customer/dashboard', function () {
+        return response()->json([
+            'message' => 'Welcome Customer',
+        ]);
+    })->middleware('role:admin,customer');
+
+});
