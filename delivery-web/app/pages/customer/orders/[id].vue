@@ -34,6 +34,43 @@ const api = useApi()
 const order = ref<Order | null>(null)
 const loading = ref(true)
 const errorMessage = ref('')
+const cancelDialog = ref(false)
+const cancelReason = ref('')
+const cancelLoading = ref(false)
+const cancelError = ref('')
+
+const canCancel = computed(() =>
+  ['pending', 'assigned'].includes(order.value?.status || '')
+)
+
+const submitCancellation = async () => {
+  if (!cancelReason.value.trim()) {
+    cancelError.value = 'Please provide a cancellation reason.'
+    return
+  }
+
+  cancelLoading.value = true
+  cancelError.value = ''
+
+  try {
+    await api(`/orders/${route.params.id}/cancel`, {
+      method: 'POST',
+      body: {
+        cancellation_reason: cancelReason.value.trim()
+      }
+    })
+
+    cancelDialog.value = false
+    cancelReason.value = ''
+
+    await fetchOrder()
+  } catch (error: any) {
+    cancelError.value =
+      error.data?.message || 'Unable to cancel this order.'
+  } finally {
+    cancelLoading.value = false
+  }
+}
 
 const fetchOrder = async () => {
   loading.value = true
@@ -107,7 +144,16 @@ onMounted(fetchOrder)
         <p class="detail-date">
           Created {{ formatDate(order.created_at) }}
         </p>
+
+        <button
+          v-if="canCancel"
+          class="cancel-order-btn"
+          @click="cancelDialog = true"
+        >
+          Cancel this order
+        </button>
       </section>
+      
 
       <section class="detail-card">
         <h3>Pickup information</h3>
@@ -148,7 +194,54 @@ onMounted(fetchOrder)
         </div>
       </section>
     </template>
+    <div v-if="cancelDialog" class="modal-overlay">
+  <div class="cancel-modal">
+    <span class="eyebrow">ORDER CANCELLATION</span>
 
+    <h3>Cancel this delivery?</h3>
+
+    <p>
+      Are you sure you want to cancel
+      <strong>{{ order?.order_number }}</strong>?
+      This action cannot be undone.
+    </p>
+
+    <div class="form-field">
+      <label>Reason for cancellation</label>
+
+      <textarea
+        v-model="cancelReason"
+        maxlength="1000"
+        placeholder="Tell us why you want to cancel..."
+        rows="4"
+      />
+
+      <small>{{ cancelReason.length }}/1000 characters</small>
+    </div>
+
+    <p v-if="cancelError" class="form-error">
+      {{ cancelError }}
+    </p>
+
+    <div class="modal-actions">
+      <button
+        class="modal-back-btn"
+        :disabled="cancelLoading"
+        @click="cancelDialog = false"
+      >
+        Keep order
+      </button>
+
+      <button
+        class="modal-confirm-btn"
+        :disabled="cancelLoading"
+        @click="submitCancellation"
+      >
+        {{ cancelLoading ? 'Cancelling...' : 'Confirm cancellation' }}
+      </button>
+    </div>
+  </div>
+</div>
     <footer>
       <span class="status-dot"></span>
       SYSTEM OPERATIONAL
