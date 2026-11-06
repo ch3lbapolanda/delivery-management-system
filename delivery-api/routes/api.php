@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Api\DispatcherOrderController;
 
 // Public endpoints
 Route::post('/register', [AuthController::class, 'register']);
@@ -21,6 +22,12 @@ Route::middleware('auth:sanctum')->group(function () {
       Route::get('/orders', [OrderController::class, 'index']);
       Route::get('/orders/{id}', [OrderController::class, 'show']);
       Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
+    });
+
+    Route::middleware('role:admin,dispatcher')
+    ->prefix('dispatcher')
+    ->group(function () {
+        Route::get('/orders', [DispatcherOrderController::class, 'index']);
     });
     
     // Admin dashboard
