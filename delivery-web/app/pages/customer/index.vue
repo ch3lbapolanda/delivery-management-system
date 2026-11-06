@@ -1,5 +1,3 @@
-
-
 <script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
@@ -170,6 +168,7 @@ onMounted(() => {
       v-for="order in orders"
       :key="order.id"
       class="order-card"
+      @click="navigateTo(`/customer/orders/${order.id}`)"
     >
       <div class="order-header">
         <h4>{{ order.order_number }}</h4>

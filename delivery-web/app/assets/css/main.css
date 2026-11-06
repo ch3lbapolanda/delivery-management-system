@@ -642,3 +642,85 @@ button {
   color: #ff7777;
   font-size: 14px;
 }
+
+
+
+/* ORDER DETAIL */
+
+.detail-card {
+  background: var(--km-surface);
+  border: 1px solid var(--km-border);
+  border-radius: var(--km-radius);
+  padding: 22px;
+  margin-bottom: 18px;
+  color: var(--km-text);
+}
+
+.detail-card h2 {
+  font-size: 22px;
+  margin: 12px 0;
+}
+
+.detail-card h3 {
+  margin: 0 0 18px;
+  font-size: 17px;
+}
+
+.detail-card p {
+  color: var(--km-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.detail-card p strong {
+  color: var(--km-text);
+}
+
+.detail-date {
+  font-size: 12px !important;
+  margin-top: 18px;
+}
+
+.history-item {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--km-border);
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--km-gold);
+}
+
+.history-item strong {
+  text-transform: capitalize;
+  font-size: 14px;
+}
+
+.history-item p {
+  margin: 5px 0;
+}
+
+.history-item small {
+  color: var(--km-muted);
+  font-size: 11px;
+}
+
+.order-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.order-card:active {
+  transform: scale(0.98);
+}
