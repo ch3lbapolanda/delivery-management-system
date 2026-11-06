@@ -836,3 +836,349 @@ button {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+
+/* DISPATCHER DASHBOARD */
+
+.dispatcher-filters {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding: 4px 0 16px;
+  scrollbar-width: none;
+}
+
+.dispatcher-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.dispatcher-filters button {
+  flex-shrink: 0;
+  padding: 10px 15px;
+  border: 1px solid var(--km-border);
+  border-radius: 20px;
+  background: var(--km-surface);
+  color: var(--km-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dispatcher-filters button.active {
+  background: var(--km-gold);
+  border-color: var(--km-gold);
+  color: #101522;
+}
+
+.dispatcher-order-info {
+  padding: 12px 0;
+  border-top: 1px solid var(--km-border);
+}
+
+.dispatcher-order-info p {
+  margin: 9px 0;
+  color: var(--km-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.dispatcher-order-info strong {
+  color: var(--km-text);
+}
+
+.order-card {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.order-card:active {
+  transform: scale(0.98);
+}
+
+
+/* =========================================
+   DISPATCHER ORDER DETAIL
+========================================= */
+
+.dispatcher-detail {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 18px 50px;
+  color: #f1f5f9;
+}
+
+.dispatcher-detail .back-button {
+  border: 1px solid #263449;
+  background: #111c2d;
+  color: #cbd5e1;
+  padding: 11px 15px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 28px;
+  cursor: pointer;
+}
+
+.dispatcher-detail .detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.dispatcher-detail .eyebrow,
+.dispatcher-detail .card-label {
+  color: #eab34c;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.dispatcher-detail .detail-header h1 {
+  font-size: 27px;
+  margin: 8px 0 5px;
+}
+
+.dispatcher-detail .detail-header p {
+  color: #94a3b8;
+  font-size: 13px;
+  margin: 0;
+}
+
+.dispatcher-detail .status-badge {
+  padding: 7px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #263449;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.dispatcher-detail .status-pending {
+  background: #49391d;
+  color: #fcd34d;
+}
+
+.dispatcher-detail .status-assigned {
+  background: #183b56;
+  color: #7dd3fc;
+}
+
+.dispatcher-detail .status-picked_up {
+  background: #37305c;
+  color: #c4b5fd;
+}
+
+.dispatcher-detail .status-in_transit {
+  background: #173f42;
+  color: #5eead4;
+}
+
+.dispatcher-detail .status-delivered {
+  background: #17432e;
+  color: #86efac;
+}
+
+.dispatcher-detail .status-cancelled {
+  background: #48252b;
+  color: #fda4af;
+}
+
+.dispatcher-detail .detail-card {
+  background: #101b2c;
+  border: 1px solid #223047;
+  border-radius: 15px;
+  padding: 19px;
+  margin-bottom: 15px;
+}
+
+.dispatcher-detail .detail-card h3 {
+  font-size: 15px;
+  margin: 0 0 19px;
+  color: #f8fafc;
+}
+
+.dispatcher-detail .order-summary {
+  border-color: #66502b;
+  background: linear-gradient(135deg, #172338, #111a29);
+}
+
+.dispatcher-detail .order-summary h2 {
+  font-size: 21px;
+  margin: 10px 0;
+  color: #f8fafc;
+  overflow-wrap: anywhere;
+}
+
+.dispatcher-detail .summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 15px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.dispatcher-detail .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 12px 0;
+  border-bottom: 1px solid #243147;
+  font-size: 12px;
+}
+
+.dispatcher-detail .info-row:last-child {
+  border-bottom: 0;
+}
+
+.dispatcher-detail .info-row span,
+.dispatcher-detail .info-block span {
+  color: #94a3b8;
+}
+
+.dispatcher-detail .info-row strong {
+  text-align: right;
+  max-width: 60%;
+  overflow-wrap: anywhere;
+}
+
+.dispatcher-detail .info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+}
+
+.dispatcher-detail .info-block strong {
+  font-size: 16px;
+}
+
+.dispatcher-detail .info-block p {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.dispatcher-detail .address-box,
+.dispatcher-detail .notes-box {
+  margin-top: 16px;
+  padding: 14px;
+  background: #0a1321;
+  border-radius: 10px;
+  border: 1px solid #263449;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.dispatcher-detail .courier-box {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.dispatcher-detail .courier-avatar {
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  background: #49391d;
+  color: #f5c66b;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.dispatcher-detail .courier-box p {
+  color: #94a3b8;
+  font-size: 11px;
+  margin: 5px 0 0;
+}
+
+.dispatcher-detail .unassigned-box {
+  padding: 14px;
+  border: 1px dashed #66502b;
+  border-radius: 10px;
+  color: #f5c66b;
+  font-size: 12px;
+}
+
+.dispatcher-detail .notes-box span {
+  color: #eab34c;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dispatcher-detail .notes-box p {
+  margin-bottom: 0;
+}
+
+.dispatcher-detail .history-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dispatcher-detail .history-item {
+  display: flex;
+  gap: 13px;
+  padding-bottom: 22px;
+  position: relative;
+}
+
+.dispatcher-detail .history-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 13px;
+  bottom: 0;
+  width: 1px;
+  background: #334155;
+}
+
+.dispatcher-detail .history-dot {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #eab34c;
+  margin-top: 3px;
+  z-index: 1;
+}
+
+.dispatcher-detail .history-content strong {
+  font-size: 13px;
+}
+
+.dispatcher-detail .history-content p {
+  color: #cbd5e1;
+  font-size: 12px;
+  margin: 6px 0;
+}
+
+.dispatcher-detail .history-content span {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.dispatcher-detail .empty-history,
+.dispatcher-detail .detail-state {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.dispatcher-detail .error {
+  color: #fda4af;
+}
+
+.dispatcher-detail .detail-state button {
+  display: block;
+  margin-top: 12px;
+  padding: 10px 15px;
+  border: 0;
+  border-radius: 8px;
+  background: #eab34c;
+  color: #111827;
+}
