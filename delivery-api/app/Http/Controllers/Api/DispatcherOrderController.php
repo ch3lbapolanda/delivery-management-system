@@ -39,4 +39,18 @@ class DispatcherOrderController extends Controller
             'data' => $orders,
         ]);
     }
+
+    public function show(int $id): JsonResponse
+    {
+        $order = Order::with([
+            'customer:id,name,email',
+            'courier:id,name',
+            'statusHistories.changedBy:id,name',
+        ])->findOrFail($id);
+
+        return response()->json([
+            'message' => 'Dispatcher order retrieved successfully.',
+            'data' => $order,
+        ]);
+    }
 }
