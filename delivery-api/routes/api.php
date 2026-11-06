@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Api\DispatcherOrderController;
 use App\Http\Controllers\Api\DispatcherAssignmentController;
+use App\Http\Controllers\Api\CourierOrderController;
 
 // Public endpoints
 Route::post('/register', [AuthController::class, 'register']);
@@ -32,6 +33,16 @@ Route::middleware('auth:sanctum')->group(function () {
       Route::get('/orders/{id}', [DispatcherOrderController::class, 'show']);
       Route::get('/couriers', [DispatcherAssignmentController::class, 'couriers']);
       Route::post('/orders/{id}/assign', [DispatcherAssignmentController::class, 'assign']);
+    });
+
+    Route::middleware('role:admin,courier')
+    ->prefix('courier')
+    ->group(function () {
+        Route::get('/orders', [CourierOrderController::class, 'index']);
+        Route::get('/orders/{id}', [CourierOrderController::class, 'show']);
+      Route::patch('/orders/{id}/status', [
+      CourierOrderController::class,
+      'updateStatus']);
     });
     
     // Admin dashboard
