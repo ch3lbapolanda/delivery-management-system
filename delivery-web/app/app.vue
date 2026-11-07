@@ -1,5 +1,6 @@
 <template>
   <NuxtPage />
+  <RoleBottomNav />
 </template>
 
 <style>

@@ -309,6 +309,13 @@ function closeSheet() {
   selectedUser.value = null
 }
 
+  function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+
 async function handleLogout() {
   closeSheet()
   await logout()

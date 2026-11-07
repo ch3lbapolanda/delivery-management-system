@@ -3632,3 +3632,378 @@ button {
   }
 }
 
+
+/* =========================================
+   KURIR MALAM - LOGIN PAGE
+========================================= */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(242, 179, 75, 0.09),
+      transparent 35%
+    ),
+    var(--km-bg);
+  color: var(--km-text);
+}
+
+.login-container {
+  width: 100%;
+  max-width: 460px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 38px;
+}
+
+.login-brand-icon {
+  width: 65px;
+  height: 65px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--km-gold);
+  border-radius: 18px;
+  color: var(--km-gold);
+  font-size: 40px;
+}
+
+.login-brand h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.login-brand h1 span {
+  color: var(--km-gold);
+}
+
+.login-brand p {
+  margin: 6px 0 0;
+  color: var(--km-muted);
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.login-card {
+  padding: 27px 23px;
+  border: 1px solid var(--km-border);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #16243a, #101a29);
+}
+
+.login-eyebrow {
+  color: var(--km-gold);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.login-card h2 {
+  margin: 13px 0 8px;
+  font-size: 25px;
+  letter-spacing: -0.7px;
+}
+
+.login-description {
+  margin: 0 0 28px;
+  color: var(--km-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+
+.login-field label {
+  color: var(--km-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.login-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--km-border);
+  border-radius: 10px;
+  outline: none;
+  background: #0b1422;
+  color: var(--km-text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.login-field input:focus {
+  border-color: var(--km-gold);
+}
+
+.login-field input::placeholder {
+  color: #64748b;
+}
+
+.login-password-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.login-password-wrap input {
+  flex: 1;
+}
+
+.login-show-password {
+  flex-shrink: 0;
+  padding: 12px 9px;
+  border: 0;
+  background: transparent;
+  color: var(--km-gold);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.login-error {
+  margin: 0 0 17px;
+  padding: 12px;
+  border: 1px solid rgba(255, 125, 135, 0.3);
+  border-radius: 9px;
+  background: rgba(255, 125, 135, 0.08);
+  color: var(--km-red);
+  font-size: 12px;
+}
+
+.login-submit {
+  width: 100%;
+  padding: 16px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--km-gold);
+  color: #101522;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+}
+
+.login-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 24px;
+  color: var(--km-muted);
+  font-size: 10px;
+}
+
+.login-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--km-green);
+}
+
+.login-copyright {
+  margin-top: 25px;
+  color: #53647a;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 380px) {
+  .login-page {
+    padding: 22px 15px;
+  }
+
+  .login-card {
+    padding: 22px 17px;
+  }
+
+  .login-brand h1 {
+    font-size: 19px;
+  }
+
+  .login-brand-icon {
+    width: 55px;
+    height: 55px;
+  }
+}
+
+
+/* =========================================
+   ADMIN BOTTOM NAVIGATION
+========================================= */
+
+.admin-dashboard {
+  padding-bottom: 125px;
+}
+
+.admin-bottom-nav {
+  position: fixed;
+  z-index: 9000;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+
+  padding: 11px 10px calc(11px + env(safe-area-inset-bottom));
+
+  border-top: 1px solid var(--km-border);
+  background: rgba(8, 14, 25, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.admin-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  min-width: 0;
+  padding: 7px 3px;
+
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--km-muted);
+
+  transition: 0.2s ease;
+}
+
+.admin-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 27px;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.admin-nav-item small {
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.admin-nav-item.active {
+  color: var(--km-gold);
+}
+
+.admin-nav-item.active .admin-nav-icon {
+  text-shadow: 0 0 15px rgba(242, 179, 75, 0.4);
+}
+
+.admin-nav-item:active {
+  transform: scale(0.92);
+}
+
+@media (min-width: 721px) {
+  .admin-bottom-nav {
+    border: 1px solid var(--km-border);
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+  }
+}
+
+
+
+/* =========================================
+   GLOBAL ROLE BOTTOM NAVIGATION
+========================================= */
+
+.role-bottom-nav {
+  position: fixed;
+  z-index: 9000;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+
+  padding: 10px 10px
+    calc(10px + env(safe-area-inset-bottom));
+
+  border-top: 1px solid var(--km-border);
+  background: rgba(8, 14, 25, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.role-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  min-width: 0;
+  padding: 8px 4px;
+
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--km-muted);
+  font: inherit;
+}
+
+.role-nav-icon {
+  display: grid;
+  place-items: center;
+  height: 27px;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.role-nav-item small {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.role-nav-item.active {
+  color: var(--km-gold);
+}
+
+.role-nav-item:active {
+  transform: scale(0.94);
+}
+
+/* Prevent content from hiding behind navigation */
+
+.admin-dashboard,
+.dashboard,
+.dispatcher-detail,
+.courier-dashboard,
+.courier-detail {
+  padding-bottom: 125px;
+}
