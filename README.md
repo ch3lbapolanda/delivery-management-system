@@ -1,11 +1,11 @@
 
 # Kurir Malam 🌙
 
-**Delivery Management System**
+**Full-Stack Delivery Management System**
 
-Kurir Malam is a full-stack delivery management platform designed to manage customers, delivery orders, courier assignments, and shipment tracking through an integrated REST API and web application.
+Kurir Malam is a full-stack delivery management platform designed to streamline delivery operations, including customer order creation, dispatcher management, courier assignments, and shipment status monitoring.
 
-Built as an independent full-stack development project, Kurir Malam focuses on practical delivery operations, role-based access control, and a responsive user experience.
+Built as an independent full-stack development project, Kurir Malam demonstrates RESTful API development, role-based access control, database management, and responsive multi-role web application development.
 
 ## Tech Stack
 
@@ -23,6 +23,7 @@ Built as an independent full-stack development project, Kurir Malam focuses on p
 - Vue 3
 - TypeScript
 - CSS3
+- Responsive Mobile-First Design
 
 ## Project Structure
 
@@ -34,37 +35,67 @@ kurir-malam/
 └── README.md
 ```
 
-## Core Features
+## User Roles & Portals
 
-### Authentication & Authorization
-- User registration and login
-- Token-based authentication with Laravel Sanctum
-- Role-based access control
-- Protected API endpoints
-- Role-based dashboard routing
+The application implements four user roles with dedicated dashboards and access permissions.
 
-### Customer Portal
+### 1. Admin Portal
+
+- View total orders and user statistics
+- Monitor order statuses
+- View recent delivery activities
+- Browse orders with status filters
+- Browse user accounts by role
+- View order details
+- View user profile information
+
+### 2. Customer Portal
+
 - Customer registration and authentication
-- Create delivery orders
+- Create instant delivery orders
+- Create scheduled delivery orders
 - View order history
 - View order details
 - Cancel eligible orders
-- Track order status and history
+- Monitor delivery status and history
 
-### Dispatcher Portal
-- View all delivery orders
+### 3. Dispatcher Portal
+
+- View delivery orders
 - Filter orders by delivery status
 - View complete order details
 - Retrieve courier accounts
 - Assign couriers to pending orders
-- Track order status history
+- Monitor delivery progress
+- View order status history
 
-### Courier Portal
+### 4. Courier Portal
+
 - View assigned delivery orders
 - View delivery details
 - Update delivery status
-- Track delivery progress
+- Follow the delivery workflow
 - View shipment status history
+- Access a dedicated courier dashboard
+
+## Authentication & Authorization
+
+The backend uses Laravel Sanctum for token-based authentication.
+
+Implemented capabilities:
+- User registration and login
+- Token generation and authentication
+- Authenticated user information
+- Logout and token revocation
+- Protected API endpoints
+- Role-based middleware
+- Role-based dashboard routing
+
+Supported roles:
+- Admin
+- Dispatcher
+- Courier
+- Customer
 
 ## Delivery Workflow
 
@@ -100,73 +131,116 @@ Delivered
 | pending | Awaiting courier assignment |
 | assigned | Courier assigned |
 | picked_up | Package picked up |
-| in_transit | Package on the way |
+| in_transit | Package is on the way |
 | delivered | Successfully delivered |
 | cancelled | Order cancelled |
 
 ## API Endpoints
+
+### Authentication
 
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/api/register` | Register customer |
 | POST | `/api/login` | User login |
 | POST | `/api/logout` | User logout |
-| GET | `/api/me` | Authenticated user |
+| GET | `/api/me` | Get authenticated user |
+
+### Customer
+
+| Method | Endpoint | Description |
+|---|---|---|
 | POST | `/api/orders` | Create delivery order |
-| GET | `/api/orders` | Customer order history |
-| GET | `/api/orders/{id}` | Customer order details |
-| POST | `/api/orders/{id}/cancel` | Cancel order |
-| GET | `/api/dispatcher/orders` | Dispatcher order list |
-| GET | `/api/dispatcher/orders/{id}` | Dispatcher order details |
-| GET | `/api/dispatcher/couriers` | Get courier list |
+| GET | `/api/orders` | Get customer order history |
+| GET | `/api/orders/{id}` | Get order details |
+| POST | `/api/orders/{id}/cancel` | Cancel eligible order |
+| GET | `/api/customer/dashboard` | Customer dashboard data |
+
+### Dispatcher
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/dispatcher/dashboard` | Dispatcher dashboard data |
+| GET | `/api/dispatcher/orders` | Get delivery orders |
+| GET | `/api/dispatcher/orders/{id}` | Get order details |
+| GET | `/api/dispatcher/couriers` | Get courier accounts |
 | POST | `/api/dispatcher/orders/{id}/assign` | Assign courier |
+
+### Courier
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/courier/dashboard` | Courier dashboard data |
 | GET | `/api/courier/orders` | Get assigned orders |
-| GET | `/api/courier/orders/{id}` | Courier order details |
+| GET | `/api/courier/orders/{id}` | Get delivery details |
 | PATCH | `/api/courier/orders/{id}/status` | Update delivery status |
+
+### Admin
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/admin/dashboard` | Get administrative statistics |
+| GET | `/api/admin/orders` | Get all delivery orders |
+| GET | `/api/admin/users` | Get user accounts |
 
 All protected endpoints require authentication and enforce role-based authorization.
 
 ## UI & Design
 
-- Dark-themed interface
-- Navy and gold visual identity
+- Dark navy and gold visual identity
 - Responsive mobile-first layouts
-- Dedicated dashboards for different user roles
+- Dedicated dashboards for all four roles
+- Shared role-based bottom navigation
+- Consistent interface components
 - Delivery status indicators
-- Order history and tracking timeline
+- Order management and detail views
+- Responsive forms and interactive elements
 
 ## Development Status
 
 **Currently under active development.**
 
 ### Completed
+
 - [x] Laravel backend initialization
 - [x] Database schema and relationships
-- [x] Authentication and authorization
+- [x] Authentication with Laravel Sanctum
+- [x] Role-based access control
 - [x] Customer order management API
-- [x] Customer portal integration
+- [x] Customer dashboard and order management
 - [x] Dispatcher order management API
 - [x] Dispatcher dashboard and order details
 - [x] Courier assignment API and frontend
 - [x] Courier order management API
 - [x] Courier delivery status workflow
 - [x] Courier dashboard and order details
+- [x] Admin dashboard API
+- [x] Admin dashboard interface
+- [x] Admin order and user listing APIs
+- [x] Login page
+- [x] Global role-based bottom navigation
+- [x] Responsive mobile-first interface
 
 ### Planned Improvements
-- [ ] Admin management dashboard
+
+- [ ] Complete navigation functionality for all user roles
+- [ ] Admin user management and account creation
 - [ ] Courier availability management
 - [ ] Google Maps integration
-- [ ] Real-time delivery tracking
+- [ ] GPS-based delivery tracking
+- [ ] Real-time delivery location updates
 - [ ] Delivery notifications
-- [ ] Automated testing
+- [ ] Automated backend and frontend testing
+- [ ] Production deployment
 
 ## Author
 
-**Independent Fullstack Developer**
+**Independent Full-Stack Developer**
 
-Designed and developed independently as a full-stack portfolio project.
+Designed and developed independently as a full-stack portfolio project, covering backend architecture, REST API development, database design, frontend implementation, and application integration.
 
 ---
 
 © 2026 Kurir Malam. All rights reserved.
+
 
