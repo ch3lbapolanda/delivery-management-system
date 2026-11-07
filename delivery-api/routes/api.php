@@ -6,6 +6,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Api\DispatcherOrderController;
 use App\Http\Controllers\Api\DispatcherAssignmentController;
 use App\Http\Controllers\Api\CourierOrderController;
+use App\Http\Controllers\AdminDashboardController;
 
 // Public endpoints
 Route::post('/register', [AuthController::class, 'register']);
@@ -45,12 +46,28 @@ Route::middleware('auth:sanctum')->group(function () {
       'updateStatus']);
     });
     
-    // Admin dashboard
-    Route::get('/admin/dashboard', function () {
-        return response()->json([
-            'message' => 'Welcome Admin',
-        ]);
-    })->middleware('role:admin');
+    
+    // Admin endpoints
+    Route::middleware('role:admin')
+        ->prefix('admin')
+        ->group(function () {
+            Route::get('/dashboard', [
+                AdminDashboardController::class,
+                'index',
+            ]);
+    
+            Route::get('/orders', [
+                AdminDashboardController::class,
+                'orders',
+            ]);
+    
+            Route::get('/users', [
+                AdminDashboardController::class,
+                'users',
+            ]);
+        });
+
+    
 
     // Dispatcher dashboard
     Route::get('/dispatcher/dashboard', function () {
