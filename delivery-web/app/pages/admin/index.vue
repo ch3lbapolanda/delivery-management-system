@@ -50,6 +50,7 @@ type Pagination<T> = {
 }
 
 const api = useApi()
+const route = useRoute()
 const { logout } = useAuth()
 
 const dashboard = ref<Dashboard | null>(null)
@@ -301,15 +302,20 @@ function openUserDetail(person: Person) {
   selectedUser.value = person
   sheetType.value = 'user-detail'
   sheetTitle.value = 'User Profile'
+  sheetOpen.value = true
 }
 
-function closeSheet() {
+async function closeSheet() {
   sheetOpen.value = false
   selectedOrder.value = null
   selectedUser.value = null
+
+  if (route.query.tab) {
+    await navigateTo('/admin', { replace: true })
+  }
 }
 
-  function scrollToTop() {
+function scrollToTop() {
   window.scrollTo({
     top: 0,
     behavior: 'smooth',
@@ -317,7 +323,7 @@ function closeSheet() {
 }
 
 async function handleLogout() {
-  closeSheet()
+  sheetOpen.value = false
   await logout()
   await navigateTo('/login')
 }
@@ -327,6 +333,20 @@ function handleKeydown(event: KeyboardEvent) {
     closeSheet()
   }
 }
+
+watch(
+  () => route.query.tab,
+  async (tab) => {
+    if (tab === 'orders') {
+      await openOrders('all')
+    } else if (tab === 'users') {
+      await openUsers('all')
+    } else {
+      sheetOpen.value = false
+    }
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
   fetchDashboard()

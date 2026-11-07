@@ -1,4 +1,5 @@
 
+
 <script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
@@ -21,10 +22,6 @@ interface CourierOrder {
   } | null
 }
 
-const openOrder = (orderId: number) => {
-  navigateTo(`/courier/orders/${orderId}`)
-}
-
 interface OrdersResponse {
   message: string
   data: {
@@ -33,6 +30,7 @@ interface OrdersResponse {
   }
 }
 
+const route = useRoute()
 const api = useApi()
 const { user, logout } = useAuth()
 
@@ -40,15 +38,47 @@ const orders = ref<CourierOrder[]>([])
 const loading = ref(true)
 const error = ref('')
 
+const currentView = computed(() => {
+  const view = route.query.view
+
+  if (view === 'active') return 'active'
+  if (view === 'completed') return 'completed'
+
+  return 'home'
+})
+
+const pageTitle = computed(() => {
+  if (currentView.value === 'active') return 'Active Deliveries'
+  if (currentView.value === 'completed') return 'Completed Deliveries'
+  return 'My Deliveries'
+})
+
+const filteredOrders = computed(() => {
+  if (currentView.value === 'active') {
+    return orders.value.filter(order =>
+      ['assigned', 'picked_up', 'in_transit'].includes(order.status)
+    )
+  }
+
+  if (currentView.value === 'completed') {
+    return orders.value.filter(order =>
+      order.status === 'delivered'
+    )
+  }
+
+  return orders.value
+})
+
+const openOrder = (orderId: number) => {
+  navigateTo(`/courier/orders/${orderId}`)
+}
+
 const fetchOrders = async () => {
   loading.value = true
   error.value = ''
 
   try {
-    const response = await api<OrdersResponse>(
-      '/courier/orders'
-    )
-
+    const response = await api<OrdersResponse>('/courier/orders')
     orders.value = response.data.data
   } catch (err: any) {
     error.value =
@@ -100,7 +130,7 @@ const formatDate = (date: string | null) => {
 
 const handleLogout = async () => {
   await logout()
-  await navigateTo('/')
+  await navigateTo('/login')
 }
 
 onMounted(fetchOrders)
@@ -154,7 +184,7 @@ onMounted(fetchOrders)
       <div class="courier-section-heading">
         <div>
           <span class="courier-eyebrow">YOUR WORKSPACE</span>
-          <h2>My Deliveries</h2>
+          <h2>{{ pageTitle }}</h2>
         </div>
 
         <button
@@ -179,20 +209,30 @@ onMounted(fetchOrders)
       </div>
 
       <div
-        v-else-if="orders.length === 0"
+        v-else-if="filteredOrders.length === 0"
         class="courier-state"
       >
-        Belum ada tugas pengiriman.
+        <template v-if="currentView === 'active'">
+          Tidak ada pengiriman aktif saat ini.
+        </template>
+
+        <template v-else-if="currentView === 'completed'">
+          Belum ada pengiriman yang selesai.
+        </template>
+
+        <template v-else>
+          Belum ada tugas pengiriman.
+        </template>
       </div>
 
       <div v-else class="courier-order-list">
 
-      <article
-  v-for="order in orders"
-  :key="order.id"
-  class="courier-order-card"
-  @click="openOrder(order.id)"
->
+        <article
+          v-for="order in filteredOrders"
+          :key="order.id"
+          class="courier-order-card"
+          @click="openOrder(order.id)"
+        >
           <div class="courier-order-top">
             <div>
               <span class="courier-order-label">

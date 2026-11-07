@@ -17,39 +17,41 @@ const menuItems = computed(() => {
 
   if (role.value === 'admin') {
     return [
-      { label: 'Home', icon: '⌂', path: home },
-      { label: 'Orders', icon: '▤', path: '/admin?tab=orders' },
-      { label: 'Users', icon: '♙', path: '/admin?tab=users' },
+      { label: 'Home', icon: '⌂', path: '/admin' },
+      { label: 'Orders', icon: '▤', path: '/admin/orders' },
+      { label: 'Users', icon: '♙', path: '/admin/users' },
       { label: 'Logout', icon: '⇥', path: 'logout' },
     ]
   }
 
   if (role.value === 'dispatcher') {
     return [
-      { label: 'Home', icon: '⌂', path: home },
-      { label: 'Orders', icon: '▤', path: home },
-      { label: 'Queue', icon: '☷', path: '/dispatcher?status=pending' },
+      { label: 'Home', icon: '⌂', path: '/dispatcher' },
+      { label: 'Orders', icon: '▤', path: '/dispatcher?view=all' },
+      { label: 'Queue', icon: '☷', path: '/dispatcher?view=queue' },
       { label: 'Logout', icon: '⇥', path: 'logout' },
     ]
   }
 
   if (role.value === 'courier') {
     return [
-      { label: 'Home', icon: '⌂', path: home },
-      { label: 'Deliveries', icon: '▤', path: home },
-      { label: 'Completed', icon: '✓', path: home },
+      { label: 'Home', icon: '⌂', path: '/courier' },
+      { label: 'Deliveries', icon: '▤', path: '/courier?view=active' },
+      { label: 'Completed', icon: '✓', path: '/courier?view=completed' },
       { label: 'Logout', icon: '⇥', path: 'logout' },
     ]
   }
 
+
   if (role.value === 'customer') {
     return [
-      { label: 'Home', icon: '⌂', path: home },
-      { label: 'Orders', icon: '▤', path: home },
+      { label: 'Home', icon: '⌂', path: '/customer' },
+      { label: 'Orders', icon: '▤', path: '/customer/orders' },
       { label: 'Create', icon: '+', path: '/customer/create' },
       { label: 'Logout', icon: '⇥', path: 'logout' },
     ]
   }
+
 
   return []
 })
@@ -66,14 +68,48 @@ watch(
   () => route.path,
   (path) => {
     if (path === homePaths[role.value]) {
-      activeMenu.value = 'home'
+      if (role.value !== 'courier' && role.value !== 'dispatcher' && !route.query.view) {
+        activeMenu.value = 'home'
+      }
     }
   },
   { immediate: true }
 )
 
 function isActive(label: string) {
-  return activeMenu.value === label.toLowerCase()
+  const key = label.toLowerCase()
+
+  if (role.value === 'admin') {
+    if (key === 'home') return route.path === '/admin'
+    if (key === 'orders') return route.path.startsWith('/admin/orders')
+    if (key === 'users') return route.path.startsWith('/admin/users')
+  }
+
+  if (role.value === 'courier') {
+    const view = route.query.view
+
+    if (key === 'home') return !view
+    if (key === 'deliveries') return view === 'active'
+    if (key === 'completed') return view === 'completed'
+  }
+
+  if (role.value === 'dispatcher') {
+    const view = route.query.view
+
+    if (key === 'home') return !view
+    if (key === 'orders') return view === 'all'
+    if (key === 'queue') return view === 'queue'
+  }
+
+  
+    if (role.value === 'customer') {
+      if (key === 'home') return route.path === '/customer'
+      if (key === 'orders') return route.path.startsWith('/customer/orders')
+      if (key === 'create') return route.path === '/customer/create'
+    }
+
+
+  return activeMenu.value === key
 }
 
 async function handleClick(path: string, label: string) {
@@ -107,3 +143,4 @@ async function handleClick(path: string, label: string) {
     </button>
   </nav>
 </template>
+

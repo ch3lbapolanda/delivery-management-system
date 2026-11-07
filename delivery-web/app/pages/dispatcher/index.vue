@@ -40,6 +40,18 @@ interface OrderResponse {
 const { user, logout } = useAuth()
 const api = useApi()
 
+const route = useRoute()
+
+const currentView = computed(() => {
+  const view = route.query.view
+
+  if (view === 'queue') return 'queue'
+  if (view === 'all') return 'all'
+
+  return 'home'
+})
+
+
 const orders = ref<Order[]>([])
 const loading = ref(false)
 const errorMessage = ref('')
@@ -56,14 +68,19 @@ const filters = [
   { label: 'Cancelled', value: 'cancelled' }
 ]
 
+
 const fetchOrders = async () => {
   loading.value = true
   errorMessage.value = ''
 
   try {
-    const query = selectedStatus.value === 'all'
+    const status = currentView.value === 'queue'
+      ? 'pending'
+      : selectedStatus.value
+
+    const query = status === 'all'
       ? ''
-      : `?status=${selectedStatus.value}`
+      : `?status=${status}`
 
     const response = await api<OrderResponse>(
       `/dispatcher/orders${query}`
@@ -78,6 +95,7 @@ const fetchOrders = async () => {
     loading.value = false
   }
 }
+
 
 const handleLogout = async () => {
   await logout()
@@ -94,9 +112,23 @@ const formatDate = (date: string) => {
 const statusLabel = (status: string) =>
   status.replace('_', ' ')
 
-watch(selectedStatus, fetchOrders)
+
+watch(selectedStatus, () => {
+  if (currentView.value !== 'queue') {
+    fetchOrders()
+  }
+})
+
+watch(
+  () => route.query.view,
+  (view) => {
+    selectedStatus.value = 'all'
+    fetchOrders()
+  }
+)
 
 onMounted(fetchOrders)
+
 </script>
 
 <template>
@@ -146,7 +178,7 @@ onMounted(fetchOrders)
         <span>OPERATIONS</span>
       </div>
 
-      <div class="dispatcher-filters">
+      <div v-if="currentView !== 'queue'"class="dispatcher-filters">
         <button
           v-for="filter in filters"
           :key="filter.value"
