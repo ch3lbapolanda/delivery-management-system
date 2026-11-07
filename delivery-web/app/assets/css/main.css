@@ -4007,3 +4007,83 @@ button {
 .courier-detail {
   padding-bottom: 125px;
 }
+
+
+
+.admin-order-select {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-order-detail-spacing {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--km-border);
+}
+
+.admin-order-detail-spacing h4 {
+  margin-bottom: 8px;
+  color: var(--km-gold);
+}
+
+.admin-order-detail-spacing p {
+  margin: 5px 0;
+  color: var(--km-text);
+  overflow-wrap: anywhere;
+}
+
+.admin-order-select .admin-row-arrow {
+  float: right;
+  color: var(--km-gold);
+}
+
+
+.admin-orders-summary {
+  margin-bottom: 24px;
+}
+
+.order-card {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.order-card * {
+  pointer-events: auto;
+}
+
+/* Customer Order Link Reset */
+.order-card,
+.order-card:visited,
+.order-card:hover,
+.order-card:active {
+  display: block;
+  color: var(--km-text);
+  text-decoration: none;
+}
+
+.order-card * {
+  text-decoration: none;
+}
+
+.order-card h4 {
+  color: var(--km-text);
+}
+
+.order-card p {
+  color: var(--km-text);
+}
+
+.order-card small {
+  color: var(--km-muted);
+}
+
+.order-card .order-detail-link {
+  color: var(--km-gold);
+  margin-top: 8px;
+}

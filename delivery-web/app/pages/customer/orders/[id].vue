@@ -43,6 +43,33 @@ const canCancel = computed(() =>
   ['pending', 'assigned'].includes(order.value?.status || '')
 )
 
+const fetchOrder = async () => {
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const response = await api<Order | { data: Order }>(
+      `/orders/${route.params.id}`
+    )
+
+    order.value = 'data' in response
+      ? response.data
+      : response
+
+    if (!order.value || !order.value.id) {
+      throw new Error('Invalid order response')
+    }
+  } catch (error: any) {
+    order.value = null
+    errorMessage.value =
+      error.data?.message ||
+      error.message ||
+      'Unable to load order details.'
+  } finally {
+    loading.value = false
+  }
+}
+
 const submitCancellation = async () => {
   if (!cancelReason.value.trim()) {
     cancelError.value = 'Please provide a cancellation reason.'
@@ -72,24 +99,6 @@ const submitCancellation = async () => {
   }
 }
 
-const fetchOrder = async () => {
-  loading.value = true
-  errorMessage.value = ''
-
-  try {
-    const response = await api<{ data: Order }>(
-      `/orders/${route.params.id}`
-    )
-
-    order.value = response.data
-  } catch (error: any) {
-    errorMessage.value =
-      error.data?.message || 'Unable to load order details.'
-  } finally {
-    loading.value = false
-  }
-}
-
 const formatDate = (date: string) => {
   return new Date(date).toLocaleString('en-US', {
     dateStyle: 'medium',
@@ -97,7 +106,13 @@ const formatDate = (date: string) => {
   })
 }
 
-onMounted(fetchOrder)
+const goBack = () => {
+  navigateTo('/customer/orders')
+}
+
+onMounted(() => {
+  fetchOrder()
+})
 </script>
 
 <template>
@@ -111,7 +126,7 @@ onMounted(fetchOrder)
         </div>
       </div>
 
-      <button class="logout-btn" @click="navigateTo('/customer')">
+      <button class="logout-btn" @click="goBack">
         ← Back
       </button>
     </header>
@@ -129,7 +144,9 @@ onMounted(fetchOrder)
     <div v-else-if="errorMessage" class="empty-state">
       <h4>Unable to load order</h4>
       <p>{{ errorMessage }}</p>
-      <button @click="fetchOrder">Try again</button>
+      <button @click="fetchOrder">
+        Try again
+      </button>
     </div>
 
     <template v-else-if="order">
@@ -153,7 +170,6 @@ onMounted(fetchOrder)
           Cancel this order
         </button>
       </section>
-      
 
       <section class="detail-card">
         <h3>Pickup information</h3>
@@ -179,11 +195,12 @@ onMounted(fetchOrder)
         <h3>Order history</h3>
 
         <div
-          v-for="history in order.status_histories"
+          v-for="history in order.status_histories || []"
           :key="history.id"
           class="history-item"
         >
           <span class="history-dot"></span>
+
           <div>
             <strong>
               {{ history.new_status.replace('_', ' ') }}
@@ -192,56 +209,62 @@ onMounted(fetchOrder)
             <small>{{ formatDate(history.created_at) }}</small>
           </div>
         </div>
+
+        <p v-if="!order.status_histories?.length">
+          No order history available.
+        </p>
       </section>
     </template>
+
     <div v-if="cancelDialog" class="modal-overlay">
-  <div class="cancel-modal">
-    <span class="eyebrow">ORDER CANCELLATION</span>
+      <div class="cancel-modal">
+        <span class="eyebrow">ORDER CANCELLATION</span>
 
-    <h3>Cancel this delivery?</h3>
+        <h3>Cancel this delivery?</h3>
 
-    <p>
-      Are you sure you want to cancel
-      <strong>{{ order?.order_number }}</strong>?
-      This action cannot be undone.
-    </p>
+        <p>
+          Are you sure you want to cancel
+          <strong>{{ order?.order_number }}</strong>?
+          This action cannot be undone.
+        </p>
 
-    <div class="form-field">
-      <label>Reason for cancellation</label>
+        <div class="form-field">
+          <label>Reason for cancellation</label>
 
-      <textarea
-        v-model="cancelReason"
-        maxlength="1000"
-        placeholder="Tell us why you want to cancel..."
-        rows="4"
-      />
+          <textarea
+            v-model="cancelReason"
+            maxlength="1000"
+            placeholder="Tell us why you want to cancel..."
+            rows="4"
+          />
 
-      <small>{{ cancelReason.length }}/1000 characters</small>
+          <small>{{ cancelReason.length }}/1000 characters</small>
+        </div>
+
+        <p v-if="cancelError" class="form-error">
+          {{ cancelError }}
+        </p>
+
+        <div class="modal-actions">
+          <button
+            class="modal-back-btn"
+            :disabled="cancelLoading"
+            @click="cancelDialog = false"
+          >
+            Keep order
+          </button>
+
+          <button
+            class="modal-confirm-btn"
+            :disabled="cancelLoading"
+            @click="submitCancellation"
+          >
+            {{ cancelLoading ? 'Cancelling...' : 'Confirm cancellation' }}
+          </button>
+        </div>
+      </div>
     </div>
 
-    <p v-if="cancelError" class="form-error">
-      {{ cancelError }}
-    </p>
-
-    <div class="modal-actions">
-      <button
-        class="modal-back-btn"
-        :disabled="cancelLoading"
-        @click="cancelDialog = false"
-      >
-        Keep order
-      </button>
-
-      <button
-        class="modal-confirm-btn"
-        :disabled="cancelLoading"
-        @click="submitCancellation"
-      >
-        {{ cancelLoading ? 'Cancelling...' : 'Confirm cancellation' }}
-      </button>
-    </div>
-  </div>
-</div>
     <footer>
       <span class="status-dot"></span>
       SYSTEM OPERATIONAL
@@ -249,3 +272,5 @@ onMounted(fetchOrder)
     </footer>
   </main>
 </template>
+
+ 
