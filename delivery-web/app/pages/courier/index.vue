@@ -1,5 +1,4 @@
 
-
 <script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
@@ -15,17 +14,19 @@ interface CourierOrder {
   recipient_name: string
   delivery_address: string
   scheduled_pickup_at: string | null
-  customer: {
+  customer?: {
     id: number
     name: string
     email: string
-  } | null
+  }
 }
 
 interface OrdersResponse {
   message: string
   data: {
     data: CourierOrder[]
+    current_page: number
+    last_page: number
     total: number
   }
 }
@@ -37,6 +38,9 @@ const { user, logout } = useAuth()
 const orders = ref<CourierOrder[]>([])
 const loading = ref(true)
 const error = ref('')
+
+const currentPage = ref(1)
+const pageSize = 10
 
 const currentView = computed(() => {
   const view = route.query.view
@@ -53,6 +57,38 @@ const pageTitle = computed(() => {
   return 'My Deliveries'
 })
 
+// Ambil semua order dari seluruh halaman API.
+const fetchOrders = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const firstResponse = await api<OrdersResponse>(
+      '/courier/orders?page=1'
+    )
+
+    const allOrders = [...firstResponse.data.data]
+    const lastPage = firstResponse.data.last_page
+
+    for (let page = 2; page <= lastPage; page++) {
+      const response = await api<OrdersResponse>(
+        `/courier/orders?page=${page}`
+      )
+
+      allOrders.push(...response.data.data)
+    }
+
+    orders.value = allOrders
+    currentPage.value = 1
+  } catch (err: any) {
+    error.value =
+      err?.data?.message || 'Gagal mengambil daftar pengiriman.'
+  } finally {
+    loading.value = false
+  }
+}
+
+// Filter berdasarkan halaman yang sedang dibuka.
 const filteredOrders = computed(() => {
   if (currentView.value === 'active') {
     return orders.value.filter(order =>
@@ -69,23 +105,39 @@ const filteredOrders = computed(() => {
   return orders.value
 })
 
-const openOrder = (orderId: number) => {
-  navigateTo(`/courier/orders/${orderId}`)
+// Pagination frontend.
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredOrders.value.length / pageSize))
+)
+
+const paginatedOrders = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+
+  return filteredOrders.value.slice(
+    start,
+    start + pageSize
+  )
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
 }
 
-const fetchOrders = async () => {
-  loading.value = true
-  error.value = ''
-
-  try {
-    const response = await api<OrdersResponse>('/courier/orders')
-    orders.value = response.data.data
-  } catch (err: any) {
-    error.value =
-      err?.data?.message || 'Gagal mengambil daftar pengiriman.'
-  } finally {
-    loading.value = false
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
   }
+}
+
+// Reset halaman ketika berpindah menu.
+watch(currentView, () => {
+  currentPage.value = 1
+})
+
+const openOrder = (orderId: number) => {
+  navigateTo(`/courier/orders/${orderId}`)
 }
 
 const statusLabel = (status: string) => {
@@ -104,6 +156,7 @@ const statusClass = (status: string) => {
   return `status-${status}`
 }
 
+// Statistik menghitung seluruh data.
 const activeOrders = computed(() =>
   orders.value.filter(order =>
     ['assigned', 'picked_up', 'in_transit'].includes(order.status)
@@ -228,7 +281,7 @@ onMounted(fetchOrders)
       <div v-else class="courier-order-list">
 
         <article
-          v-for="order in filteredOrders"
+          v-for="order in paginatedOrders"
           :key="order.id"
           class="courier-order-card"
           @click="openOrder(order.id)"
@@ -286,6 +339,31 @@ onMounted(fetchOrders)
         </article>
 
       </div>
+
+      <!-- Pagination -->
+      <div
+        v-if="!loading && !error && totalPages > 1"
+        class="courier-pagination"
+      >
+        <button
+          :disabled="currentPage <= 1"
+          @click="previousPage"
+        >
+          Previous
+        </button>
+
+        <span>
+          {{ currentPage }} / {{ totalPages }}
+        </span>
+
+        <button
+          :disabled="currentPage >= totalPages"
+          @click="nextPage"
+        >
+          Next
+        </button>
+      </div>
+
     </section>
 
   </main>
