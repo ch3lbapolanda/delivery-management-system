@@ -4445,3 +4445,28 @@ button {
 .admin-user-detail strong {
   color: var(--km-text);
 }
+
+.assignment-details {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--km-border);
+}
+
+.assignment-details-heading {
+  margin-bottom: 14px;
+  color: var(--km-gold);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.assignment-details .info-row {
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.assignment-details .info-row strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}

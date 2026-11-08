@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
@@ -170,6 +171,18 @@ const statusClass = (status: string) => {
   return `status-${status}`
 }
 
+// Ambil riwayat assignment terbaru.
+const assignmentHistory = computed(() => {
+  const histories = order.value?.status_histories || []
+
+  return histories
+    .filter(history => history.new_status === 'assigned')
+    .sort((a, b) =>
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime()
+    )[0] || null
+})
+
 onMounted(fetchOrder)
 </script>
 
@@ -289,11 +302,44 @@ onMounted(fetchOrder)
           <div>
             <strong>{{ order.courier.name }}</strong>
             <p>Assigned Courier</p>
+            <p v-if="order.courier.email">
+              {{ order.courier.email }}
+            </p>
           </div>
         </div>
 
         <div v-else class="unassigned-box">
           Belum ada kurir yang ditugaskan.
+        </div>
+
+        <div
+          v-if="order.courier && assignmentHistory"
+          class="assignment-details"
+        >
+          <div class="assignment-details-heading">
+            Assignment Details
+          </div>
+
+          <div class="info-row">
+            <span>Assigned By</span>
+            <strong>
+              {{ assignmentHistory.changed_by?.name || 'System' }}
+            </strong>
+          </div>
+
+          <div class="info-row">
+            <span>Assignment Time</span>
+            <strong>
+              {{ formatDate(assignmentHistory.created_at) }}
+            </strong>
+          </div>
+
+          <div class="notes-box">
+            <span>Assignment Note</span>
+            <p>
+              {{ assignmentHistory.note || 'Tidak ada catatan.' }}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -450,5 +496,6 @@ onMounted(fetchOrder)
 
   </main>
 </template>
+
 
 
