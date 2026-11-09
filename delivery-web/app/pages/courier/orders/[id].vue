@@ -19,6 +19,14 @@ interface StatusHistory {
   changed_by: Person | null
 }
 
+interface OrderEta {
+  available: boolean
+  distance_km: number | null
+  duration_minutes: number | null
+  estimated_arrival_at: string | null
+  message: string
+}
+  
 interface Order {
   id: number
   order_number: string
@@ -33,6 +41,7 @@ interface Order {
   scheduled_pickup_at: string | null
   notes: string | null
   price: string | number | null
+  eta?: OrderEta
   customer: Person | null
   status_histories: StatusHistory[]
 }
@@ -40,6 +49,7 @@ interface Order {
 interface OrderResponse {
   message: string
   data: Order
+  eta?: OrderEta
 }
 
 const route = useRoute()
@@ -60,7 +70,10 @@ const fetchOrder = async () => {
       `/courier/orders/${route.params.id}`
     )
 
-    order.value = response.data
+    order.value = {
+      ...response.data,
+      eta: response.eta
+    }
   } catch (err: any) {
     error.value =
       err?.data?.message || 'Gagal mengambil detail pengiriman.'
@@ -227,6 +240,56 @@ onMounted(fetchOrder)
           </span>
         </div>
       </section>
+
+      
+<section class="courier-detail-card eta-card">
+  <span class="courier-detail-eyebrow">
+    DELIVERY ESTIMATE
+  </span>
+
+  <h3>Estimated Arrival</h3>
+
+  <template v-if="order.eta?.available">
+    <div class="eta-highlight">
+      {{ order.eta.duration_minutes }} minutes
+    </div>
+
+    <div class="eta-info">
+      <div class="eta-info-row">
+        <span>Estimated Distance</span>
+        <strong>{{ order.eta.distance_km }} km</strong>
+      </div>
+
+      <div class="eta-info-row">
+        <span>Travel Duration</span>
+        <strong>{{ order.eta.duration_minutes }} minutes</strong>
+      </div>
+
+      <div class="eta-info-row">
+        <span>Estimated Arrival</span>
+        <strong>
+          {{ formatDate(order.eta.estimated_arrival_at) }}
+        </strong>
+      </div>
+    </div>
+
+    <p class="eta-disclaimer">
+      {{ order.eta.message }}
+    </p>
+  </template>
+
+  <template v-else>
+    <p class="eta-unavailable">
+      {{ order.eta?.message || 'ETA belum tersedia.' }}
+    </p>
+
+    <p class="eta-disclaimer">
+      Estimasi tersedia setelah perjalanan dimulai
+      dan koordinat pickup serta tujuan tersedia.
+    </p>
+  </template>
+</section>
+
 
       <section class="courier-detail-card">
         <h3>Pickup Information</h3>
