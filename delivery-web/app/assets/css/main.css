@@ -4470,3 +4470,107 @@ button {
   text-align: right;
   overflow-wrap: anywhere;
 }
+
+
+
+/* Customer ETA */
+.eta-card {
+  border-color: rgba(242, 179, 75, 0.35);
+}
+
+.eta-highlight {
+  margin: 14px 0 20px;
+  color: var(--km-gold-light);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.eta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.eta-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--km-border);
+}
+
+.eta-info-row span {
+  color: var(--km-muted);
+  font-size: 13px;
+}
+
+.eta-info-row strong {
+  color: var(--km-text);
+  font-size: 13px;
+  text-align: right;
+}
+
+.eta-unavailable {
+  color: var(--km-muted);
+  margin-top: 12px;
+}
+
+.eta-disclaimer {
+  margin-top: 16px;
+  color: var(--km-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+
+
+/* Delivery ETA - Dispatcher */
+.eta-card {
+  border-color: rgba(242, 179, 75, 0.35);
+}
+
+.eta-highlight {
+  margin: 14px 0 20px;
+  color: var(--km-gold-light);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.eta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.eta-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--km-border);
+}
+
+.eta-info-row span {
+  color: var(--km-muted);
+  font-size: 13px;
+}
+
+.eta-info-row strong {
+  color: var(--km-text);
+  font-size: 13px;
+  text-align: right;
+}
+
+.eta-unavailable {
+  color: var(--km-muted);
+  margin-top: 12px;
+}
+
+.eta-disclaimer {
+  margin-top: 16px;
+  color: var(--km-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
