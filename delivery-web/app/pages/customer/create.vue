@@ -1,7 +1,13 @@
+
 <script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
 })
+
+interface Coordinates {
+  latitude: number | null
+  longitude: number | null
+}
 
 const api = useApi()
 
@@ -18,21 +24,57 @@ const form = reactive({
   recipient_phone: '',
   delivery_address: '',
   scheduled_pickup_at: '',
-  notes: ''
+  notes: '',
+  pickup_location: {
+    latitude: null,
+    longitude: null
+  } as Coordinates,
+  delivery_location: {
+    latitude: null,
+    longitude: null
+  } as Coordinates
 })
 
 const submitOrder = async () => {
-  loading.value = true
   errorMessage.value = ''
   successMessage.value = ''
 
+  if (
+    form.pickup_location.latitude === null ||
+    form.pickup_location.longitude === null
+  ) {
+    errorMessage.value = 'Please select your pickup location.'
+    return
+  }
+
+  if (
+    form.delivery_location.latitude === null ||
+    form.delivery_location.longitude === null
+  ) {
+    errorMessage.value = 'Please select your delivery location.'
+    return
+  }
+
+  loading.value = true
+
   try {
     const payload = {
-      ...form,
+      delivery_type: form.delivery_type,
+      sender_name: form.sender_name,
+      sender_phone: form.sender_phone,
+      pickup_address: form.pickup_address,
+      pickup_latitude: form.pickup_location.latitude,
+      pickup_longitude: form.pickup_location.longitude,
+      recipient_name: form.recipient_name,
+      recipient_phone: form.recipient_phone,
+      delivery_address: form.delivery_address,
+      delivery_latitude: form.delivery_location.latitude,
+      delivery_longitude: form.delivery_location.longitude,
       scheduled_pickup_at:
         form.delivery_type === 'scheduled'
           ? form.scheduled_pickup_at
-          : null
+          : null,
+      notes: form.notes || null
     }
 
     await api('/orders', {
@@ -98,7 +140,10 @@ const submitOrder = async () => {
           </label>
         </div>
 
-        <div v-if="form.delivery_type === 'scheduled'" class="form-field">
+        <div
+          v-if="form.delivery_type === 'scheduled'"
+          class="form-field"
+        >
           <label>Scheduled pickup</label>
           <input
             v-model="form.scheduled_pickup_at"
@@ -118,13 +163,32 @@ const submitOrder = async () => {
 
         <div class="form-field">
           <label>Sender phone</label>
-          <input v-model="form.sender_phone" type="tel" required />
+          <input
+            v-model="form.sender_phone"
+            type="tel"
+            required
+          />
         </div>
 
         <div class="form-field">
           <label>Pickup address</label>
-          <textarea v-model="form.pickup_address" required />
+          <textarea
+            v-model="form.pickup_address"
+            required
+          />
         </div>
+
+        <ClientOnly>
+          <LocationPicker
+            v-model="form.pickup_location"
+            title="Select Pickup Location"
+            :allow-current-location="true"
+          />
+
+          <template #fallback>
+            <p>Loading pickup map...</p>
+          </template>
+        </ClientOnly>
       </div>
 
       <div class="form-section">
@@ -132,18 +196,39 @@ const submitOrder = async () => {
 
         <div class="form-field">
           <label>Recipient name</label>
-          <input v-model="form.recipient_name" required />
+          <input
+            v-model="form.recipient_name"
+            required
+          />
         </div>
 
         <div class="form-field">
           <label>Recipient phone</label>
-          <input v-model="form.recipient_phone" type="tel" required />
+          <input
+            v-model="form.recipient_phone"
+            type="tel"
+            required
+          />
         </div>
 
         <div class="form-field">
           <label>Delivery address</label>
-          <textarea v-model="form.delivery_address" required />
+          <textarea
+            v-model="form.delivery_address"
+            required
+          />
         </div>
+
+        <ClientOnly>
+          <LocationPicker
+            v-model="form.delivery_location"
+            title="Select Delivery Location"
+          />
+
+          <template #fallback>
+            <p>Loading delivery map...</p>
+          </template>
+        </ClientOnly>
       </div>
 
       <div class="form-section">
@@ -162,7 +247,15 @@ const submitOrder = async () => {
         {{ errorMessage }}
       </p>
 
-      <button class="submit-btn" type="submit" :disabled="loading">
+      <p v-if="successMessage" class="success-message">
+        {{ successMessage }}
+      </p>
+
+      <button
+        class="submit-btn"
+        type="submit"
+        :disabled="loading"
+      >
         {{ loading ? 'Creating delivery...' : 'Create delivery →' }}
       </button>
     </form>

@@ -4574,3 +4574,80 @@ button {
   font-size: 12px;
   line-height: 1.6;
 }
+
+
+/* Location Picker */
+.location-picker {
+  margin-top: 16px;
+}
+
+.location-picker-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.location-picker-heading strong {
+  color: var(--km-text);
+  font-size: 14px;
+}
+
+.location-picker-hint {
+  color: var(--km-muted);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.location-map {
+  width: 100%;
+  height: 280px;
+  border: 1px solid var(--km-border);
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.location-gps-button {
+  background: var(--km-gold);
+  color: #080e19;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.location-gps-button:disabled {
+  opacity: 0.6;
+}
+
+.location-coordinates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--km-surface-2);
+  border: 1px solid var(--km-border);
+  border-radius: 10px;
+}
+
+.location-coordinates span {
+  color: var(--km-muted);
+  font-size: 11px;
+}
+
+.location-coordinates strong {
+  color: var(--km-text);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.location-error {
+  color: var(--km-red);
+  font-size: 12px;
+  margin-top: 10px;
+}
