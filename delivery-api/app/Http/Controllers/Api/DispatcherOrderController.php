@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\DeliveryEtaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DispatcherOrderController extends Controller
 {
-    public function index(Request $request): JsonResponse
-    {
+    public function index(
+        Request $request,
+        DeliveryEtaService $etaService
+    ): JsonResponse {
         $validated = $request->validate([
             'status' => [
                 'sometimes',
@@ -23,6 +26,7 @@ class DispatcherOrderController extends Controller
             ->with([
                 'customer:id,name,email',
                 'courier:id,name',
+                'statusHistories',
             ])
             ->when(
                 isset($validated['status']),
@@ -34,14 +38,27 @@ class DispatcherOrderController extends Controller
             ->latest()
             ->paginate(10);
 
+        $orders->getCollection()->transform(
+            function ($order) use ($etaService) {
+                $order->setAttribute(
+                    'eta',
+                    $etaService->calculate($order)
+                );
+
+                return $order;
+            }
+        );
+
         return response()->json([
             'message' => 'Dispatcher orders retrieved successfully.',
             'data' => $orders,
         ]);
     }
 
-    public function show(int $id): JsonResponse
-    {
+    public function show(
+        int $id,
+        DeliveryEtaService $etaService
+    ): JsonResponse {
         $order = Order::with([
             'customer:id,name,email',
             'courier:id,name',
@@ -51,6 +68,8 @@ class DispatcherOrderController extends Controller
         return response()->json([
             'message' => 'Dispatcher order retrieved successfully.',
             'data' => $order,
+            'eta' => $etaService->calculate($order),
         ]);
     }
 }
+
