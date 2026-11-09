@@ -27,6 +27,18 @@ type Order = {
   created_at: string
 }
 
+type OperationalStatistics = {
+  success_rate: number
+  cancellation_rate: number
+  active_orders: number
+  average_delivery_duration_minutes: number | null
+  completed_orders: number
+  daily_orders: {
+    date: string
+    total: number
+  }[]
+}
+
 type Dashboard = {
   orders: {
     total: number
@@ -40,6 +52,7 @@ type Dashboard = {
     admins: number
   }
   recent_orders: Order[]
+  operational_statistics: OperationalStatistics
 }
 
 type Pagination<T> = {
@@ -121,6 +134,33 @@ const userStats = computed(() => dashboard.value?.users ?? {
 const orderStats = computed(() => dashboard.value?.orders ?? {
   total: 0,
   by_status: {},
+})
+
+const operationalStats = computed(() =>
+  dashboard.value?.operational_statistics ?? {
+    success_rate: 0,
+    cancellation_rate: 0,
+    active_orders: 0,
+    average_delivery_duration_minutes: null,
+    completed_orders: 0,
+    daily_orders: [],
+  }
+)
+
+const dailyOrderBars = computed(() => {
+  const rows = operationalStats.value.daily_orders
+  const max = Math.max(...rows.map(item => item.total), 1)
+
+  return rows.map(item => ({
+    ...item,
+    label: new Date(item.date + 'T00:00:00').toLocaleDateString(
+      'id-ID',
+      { day: '2-digit', month: 'short' }
+    ),
+    height: item.total > 0
+      ? Math.max((item.total / max) * 100, 8)
+      : 0,
+  }))
 })
 
 function userCount(key: string) {
@@ -432,6 +472,77 @@ onBeforeUnmount(() => {
             <strong>{{ orderStats.by_status.delivered || 0 }}</strong>
             <small>View delivered orders →</small>
           </button>
+        </div>
+      </section>
+
+            <section class="admin-section">
+        <div class="admin-section-heading">
+          <div>
+            <span class="admin-eyebrow">PERFORMANCE</span>
+            <h2>Operational Statistics</h2>
+          </div>
+        </div>
+
+        <div class="admin-operations-grid">
+          <div class="admin-operation-card">
+            <span>Success Rate</span>
+            <strong class="operation-green">
+              {{ operationalStats.success_rate }}%
+            </strong>
+            <small>Successfully delivered</small>
+          </div>
+
+          <div class="admin-operation-card">
+            <span>Cancellation Rate</span>
+            <strong class="operation-red">
+              {{ operationalStats.cancellation_rate }}%
+            </strong>
+            <small>Cancelled orders</small>
+          </div>
+
+          <div class="admin-operation-card">
+            <span>Active Orders</span>
+            <strong>{{ operationalStats.active_orders }}</strong>
+            <small>Currently being processed</small>
+          </div>
+
+          <div class="admin-operation-card">
+            <span>Average Delivery</span>
+            <strong>
+              {{ operationalStats.average_delivery_duration_minutes ?? '-' }}
+              <small v-if="operationalStats.average_delivery_duration_minutes !== null">
+                min
+              </small>
+            </strong>
+            <small>Transit to delivered</small>
+          </div>
+        </div>
+
+        <div class="admin-chart-card">
+          <div class="admin-chart-heading">
+            <div>
+              <h3>Daily Orders</h3>
+              <p>Order activity over the last 7 days</p>
+            </div>
+            <strong>{{ operationalStats.completed_orders }} delivered</strong>
+          </div>
+
+          <div class="admin-chart">
+            <div
+              v-for="item in dailyOrderBars"
+              :key="item.date"
+              class="admin-chart-column"
+            >
+              <strong>{{ item.total }}</strong>
+              <div class="admin-chart-track">
+                <div
+                  class="admin-chart-bar"
+                  :style="{ height: `${item.height}%` }"
+                ></div>
+              </div>
+              <small>{{ item.label }}</small>
+            </div>
+          </div>
         </div>
       </section>
 

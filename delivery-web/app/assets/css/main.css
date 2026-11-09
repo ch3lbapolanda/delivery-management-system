@@ -4651,3 +4651,139 @@ button {
   font-size: 12px;
   margin-top: 10px;
 }
+
+
+/* ADMIN OPERATIONAL STATISTICS */
+
+.admin-operations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-operation-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--km-border);
+  border-radius: var(--km-radius);
+  background: var(--km-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-operation-card > span {
+  color: var(--km-muted);
+  font-size: 12px;
+}
+
+.admin-operation-card > strong {
+  color: var(--km-text);
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.admin-operation-card > small {
+  color: var(--km-muted);
+  font-size: 10px;
+}
+
+.admin-operation-card .operation-green {
+  color: var(--km-green);
+}
+
+.admin-operation-card .operation-red {
+  color: var(--km-red);
+}
+
+.admin-chart-card {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid var(--km-border);
+  border-radius: var(--km-radius);
+  background: var(--km-surface);
+}
+
+.admin-chart-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.admin-chart-heading h3 {
+  margin: 0;
+  color: var(--km-text);
+  font-size: 15px;
+}
+
+.admin-chart-heading p {
+  margin: 5px 0 0;
+  color: var(--km-muted);
+  font-size: 11px;
+}
+
+.admin-chart-heading > strong {
+  color: var(--km-green);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.admin-chart {
+  height: 150px;
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admin-chart-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.admin-chart-column > strong {
+  color: var(--km-text);
+  font-size: 11px;
+}
+
+.admin-chart-track {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--km-surface-2);
+}
+
+.admin-chart-bar {
+  width: 100%;
+  min-height: 0;
+  border-radius: 6px;
+  background: var(--km-gold);
+  transition: height 0.3s ease;
+}
+
+.admin-chart-column > small {
+  color: var(--km-muted);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+@media (max-width: 360px) {
+  .admin-operation-card {
+    padding: 12px;
+  }
+
+  .admin-operation-card > strong {
+    font-size: 21px;
+  }
+
+  .admin-chart {
+    gap: 5px;
+  }
+}
