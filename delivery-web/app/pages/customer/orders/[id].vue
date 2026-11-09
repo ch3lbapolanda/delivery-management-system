@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
@@ -10,6 +9,14 @@ interface OrderHistory {
   new_status: string
   note: string | null
   created_at: string
+}
+
+interface OrderEta {
+  available: boolean
+  distance_km: number | null
+  duration_minutes: number | null
+  estimated_arrival_at: string | null
+  message: string
 }
 
 interface Order {
@@ -26,6 +33,12 @@ interface Order {
   notes: string | null
   created_at: string
   status_histories: OrderHistory[]
+  eta?: OrderEta
+}
+
+interface OrderResponse {
+  data: Order
+  eta?: OrderEta
 }
 
 const route = useRoute()
@@ -48,13 +61,18 @@ const fetchOrder = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await api<Order | { data: Order }>(
+    const response = await api<Order | OrderResponse>(
       `/orders/${route.params.id}`
     )
 
-    order.value = 'data' in response
-      ? response.data
-      : response
+    if ('data' in response) {
+      order.value = {
+        ...response.data,
+        eta: response.eta
+      }
+    } else {
+      order.value = response
+    }
 
     if (!order.value || !order.value.id) {
       throw new Error('Invalid order response')
@@ -101,6 +119,13 @@ const submitCancellation = async () => {
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  })
+}
+
+const formatEtaDate = (date: string) => {
+  return new Date(date).toLocaleString('id-ID', {
     dateStyle: 'medium',
     timeStyle: 'short'
   })
@@ -169,6 +194,50 @@ onMounted(() => {
         >
           Cancel this order
         </button>
+      </section>
+
+      <section class="detail-card eta-card">
+        <span class="eyebrow">DELIVERY ESTIMATE</span>
+        <h3>Estimated arrival</h3>
+
+        <template v-if="order.eta?.available">
+          <div class="eta-highlight">
+            {{ order.eta.duration_minutes }} minutes
+          </div>
+
+          <div class="eta-info">
+            <div class="eta-info-row">
+              <span>Estimated distance</span>
+              <strong>{{ order.eta.distance_km }} km</strong>
+            </div>
+
+            <div class="eta-info-row">
+              <span>Travel duration</span>
+              <strong>{{ order.eta.duration_minutes }} minutes</strong>
+            </div>
+
+            <div class="eta-info-row">
+              <span>Estimated arrival</span>
+              <strong>
+                {{ formatEtaDate(order.eta.estimated_arrival_at!) }}
+              </strong>
+            </div>
+          </div>
+
+          <p class="eta-disclaimer">
+            {{ order.eta.message }}
+          </p>
+        </template>
+
+        <template v-else>
+          <p class="eta-unavailable">
+            {{ order.eta?.message || 'ETA belum tersedia.' }}
+          </p>
+          <p class="eta-disclaimer">
+            Estimasi akan tersedia setelah kurir memulai perjalanan
+            dan koordinat pickup serta tujuan tersedia.
+          </p>
+        </template>
       </section>
 
       <section class="detail-card">
@@ -272,5 +341,3 @@ onMounted(() => {
     </footer>
   </main>
 </template>
-
- 
