@@ -110,6 +110,18 @@ const formatDate = (date: string | null) => {
   })
 }
 
+// Ambil riwayat penugasan kurir.
+const assignmentHistory = computed(() => {
+  const histories = order.value?.status_histories || []
+
+  return histories
+    .filter(history => history.new_status === 'assigned')
+    .sort((a, b) =>
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime()
+    )[0] || null
+})
+
 const updateStatus = async () => {
   if (!order.value || updating.value) return
 
@@ -244,6 +256,35 @@ onMounted(fetchOrder)
         </div>
       </section>
 
+      <!-- ASSIGNMENT INFORMATION -->
+      <section
+        v-if="assignmentHistory"
+        class="courier-detail-card"
+      >
+        <h3>Assignment Information</h3>
+
+        <div class="courier-info-row">
+          <span>Assigned By</span>
+          <strong>
+            {{ assignmentHistory.changed_by?.name || 'System' }}
+          </strong>
+        </div>
+
+        <div class="courier-info-row">
+          <span>Assignment Time</span>
+          <strong>
+            {{ formatDate(assignmentHistory.created_at) }}
+          </strong>
+        </div>
+
+        <div class="courier-notes">
+          <span>Assignment Note</span>
+          <p>
+            {{ assignmentHistory.note || 'Tidak ada catatan.' }}
+          </p>
+        </div>
+      </section>
+
       <section class="courier-detail-card">
         <h3>Delivery Schedule</h3>
 
@@ -346,3 +387,4 @@ onMounted(fetchOrder)
 
   </main>
 </template>
+
