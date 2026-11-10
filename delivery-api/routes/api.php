@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\DispatcherOrderController;
 use App\Http\Controllers\Api\DispatcherAssignmentController;
 use App\Http\Controllers\Api\CourierOrderController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\Api\CourierDeliveryProofController;
 
 // Public endpoints
 Route::post('/register', [AuthController::class, 'register']);
@@ -44,6 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
       Route::patch('/orders/{id}/status', [
       CourierOrderController::class,
       'updateStatus']);
+      Route::post('/orders/{id}/proof', [
+      CourierDeliveryProofController::class,
+      'store',
+    ]);
     });
     
     

@@ -71,7 +71,7 @@ class CourierOrderController extends Controller
             'status' => [
                 'required',
                 'string',
-                'in:picked_up,in_transit,delivered',
+                'in:picked_up,in_transit',
             ],
             'note' => [
                 'nullable',
