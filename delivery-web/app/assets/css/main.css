@@ -4787,3 +4787,87 @@ button {
     gap: 5px;
   }
 }
+
+
+/* Proof of Delivery */
+.pod-card {
+  border-color: rgba(82, 214, 160, 0.3);
+}
+
+.pod-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  color: var(--km-green);
+  font-size: 13px;
+}
+
+.pod-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(82, 214, 160, 0.12);
+  font-weight: 700;
+}
+
+.pod-image-wrapper {
+  margin: 16px 0;
+}
+
+.pod-image {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--km-surface-2);
+}
+
+.pod-image-caption {
+  margin-top: 8px;
+  color: var(--km-muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.pod-info {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.pod-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pod-info-row span {
+  color: var(--km-muted);
+  font-size: 12px;
+}
+
+.pod-info-row strong {
+  color: var(--km-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.pod-notes {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--km-surface-2);
+}
+
+.pod-notes p {
+  margin-top: 8px;
+  color: var(--km-text);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}

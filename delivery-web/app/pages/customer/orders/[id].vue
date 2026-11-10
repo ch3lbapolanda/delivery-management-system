@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
@@ -19,6 +20,20 @@ interface OrderEta {
   message: string
 }
 
+interface DeliveryProof {
+  id: number
+  order_id: number
+  uploaded_by: {
+    id: number
+    name: string
+  } | null
+  photo_path: string
+  photo_url: string
+  recipient_name: string
+  notes: string | null
+  created_at: string
+}
+
 interface Order {
   id: number
   order_number: string
@@ -33,6 +48,7 @@ interface Order {
   notes: string | null
   created_at: string
   status_histories: OrderHistory[]
+  delivery_proof?: DeliveryProof | null
   eta?: OrderEta
 }
 
@@ -260,6 +276,68 @@ onMounted(() => {
         <p>Notes: {{ order.notes || 'No additional notes' }}</p>
       </section>
 
+      <!-- PROOF OF DELIVERY -->
+      <section
+        v-if="order.delivery_proof"
+        class="detail-card pod-card"
+      >
+        <span class="eyebrow">DELIVERY CONFIRMATION</span>
+        <h3>Proof of delivery</h3>
+
+        <div class="pod-status">
+          <span class="pod-check">✓</span>
+          <strong>Delivery successfully completed</strong>
+        </div>
+
+        <div class="pod-image-wrapper">
+          <a
+            :href="order.delivery_proof.photo_url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              :src="order.delivery_proof.photo_url"
+              alt="Delivery proof photo"
+              class="pod-image"
+            />
+          </a>
+          <p class="pod-image-caption">
+            Tap image to view full size
+          </p>
+        </div>
+
+        <div class="pod-info">
+          <div class="pod-info-row">
+            <span>Received by</span>
+            <strong>
+              {{ order.delivery_proof.recipient_name }}
+            </strong>
+          </div>
+
+          <div class="pod-info-row">
+            <span>Uploaded by</span>
+            <strong>
+              {{ order.delivery_proof.uploaded_by?.name || 'Courier' }}
+            </strong>
+          </div>
+
+          <div class="pod-info-row">
+            <span>Upload time</span>
+            <strong>
+              {{ formatDate(order.delivery_proof.created_at) }}
+            </strong>
+          </div>
+        </div>
+
+        <div
+          v-if="order.delivery_proof.notes"
+          class="pod-notes"
+        >
+          <span class="eyebrow">COURIER NOTES</span>
+          <p>{{ order.delivery_proof.notes }}</p>
+        </div>
+      </section>
+
       <section class="detail-card">
         <h3>Order history</h3>
 
@@ -341,3 +419,4 @@ onMounted(() => {
     </footer>
   </main>
 </template>
+
