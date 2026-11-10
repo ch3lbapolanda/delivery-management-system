@@ -9,11 +9,28 @@ interface Coordinates {
   longitude: number | null
 }
 
+interface Pricing {
+  delivery_type: string
+  distance_km: number
+  base_price: number
+  price_per_km: number
+  distance_fee: number
+  additional_fee: number
+  minimum_price: number
+  total_price: number
+}
+
 const api = useApi()
 
 const loading = ref(false)
+const pricingLoading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const pricingError = ref('')
+const pricing = ref<Pricing | null>(null)
+
+let pricingTimer: ReturnType<typeof setTimeout> | null = null
+let pricingRequestId = 0
 
 const form = reactive({
   delivery_type: 'instant',
@@ -35,6 +52,103 @@ const form = reactive({
   } as Coordinates
 })
 
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0
+  }).format(value)
+}
+
+const calculatePricing = async () => {
+  const pickup = form.pickup_location
+  const delivery = form.delivery_location
+
+  if (
+    pickup.latitude === null ||
+    pickup.longitude === null ||
+    delivery.latitude === null ||
+    delivery.longitude === null
+  ) {
+    pricing.value = null
+    return false
+  }
+
+  const requestId = ++pricingRequestId
+
+  pricingLoading.value = true
+  pricingError.value = ''
+  pricing.value = null
+
+  try {
+    const response: any = await api('/pricing/estimate', {
+      method: 'POST',
+      body: {
+        delivery_type: form.delivery_type,
+        pickup_latitude: pickup.latitude,
+        pickup_longitude: pickup.longitude,
+        delivery_latitude: delivery.latitude,
+        delivery_longitude: delivery.longitude
+      }
+    })
+
+    if (requestId !== pricingRequestId) {
+      return false
+    }
+
+    pricing.value = response.data
+
+    return true
+  } catch (error: any) {
+    if (requestId === pricingRequestId) {
+      pricingError.value =
+        error.data?.message || 'Failed to calculate delivery price.'
+    }
+
+    return false
+  } finally {
+    if (requestId === pricingRequestId) {
+      pricingLoading.value = false
+    }
+  }
+}
+
+watch(
+  () => [
+    form.delivery_type,
+    form.pickup_location.latitude,
+    form.pickup_location.longitude,
+    form.delivery_location.latitude,
+    form.delivery_location.longitude
+  ],
+  () => {
+    if (pricingTimer) {
+      clearTimeout(pricingTimer)
+    }
+
+    pricingRequestId++
+    pricing.value = null
+    pricingError.value = ''
+    pricingLoading.value = false
+
+    const pickup = form.pickup_location
+    const delivery = form.delivery_location
+
+    if (
+      pickup.latitude === null ||
+      pickup.longitude === null ||
+      delivery.latitude === null ||
+      delivery.longitude === null
+    ) {
+      return
+    }
+
+    pricingTimer = setTimeout(() => {
+      calculatePricing()
+    }, 500)
+  }
+)
+
 const submitOrder = async () => {
   errorMessage.value = ''
   successMessage.value = ''
@@ -53,6 +167,21 @@ const submitOrder = async () => {
   ) {
     errorMessage.value = 'Please select your delivery location.'
     return
+  }
+
+  if (form.delivery_type === 'scheduled' && !form.scheduled_pickup_at) {
+    errorMessage.value = 'Please select scheduled pickup time.'
+    return
+  }
+
+  if (!pricing.value) {
+    const calculated = await calculatePricing()
+
+    if (!calculated || !pricing.value) {
+      errorMessage.value =
+        pricingError.value || 'Please wait for price estimation.'
+      return
+    }
   }
 
   loading.value = true
@@ -105,7 +234,11 @@ const submitOrder = async () => {
         </div>
       </div>
 
-      <button class="logout-btn" @click="navigateTo('/customer')">
+      <button
+        class="logout-btn"
+        type="button"
+        @click="navigateTo('/customer')"
+      >
         ← Back
       </button>
     </header>
@@ -243,6 +376,68 @@ const submitOrder = async () => {
         </div>
       </div>
 
+      <div class="form-section pricing-section">
+        <h3>Delivery price estimation</h3>
+
+        <div v-if="pricingLoading" class="pricing-loading">
+          Calculating delivery price...
+        </div>
+
+        <div v-else-if="pricing" class="pricing-card">
+          <div class="pricing-row">
+            <span>Service type</span>
+            <strong>
+              {{ pricing.delivery_type === 'instant' ? 'Instant' : 'Scheduled' }}
+            </strong>
+          </div>
+
+          <div class="pricing-row">
+            <span>Estimated distance</span>
+            <strong>{{ pricing.distance_km }} km</strong>
+          </div>
+
+          <div class="pricing-row">
+            <span>Base price</span>
+            <strong>{{ formatCurrency(pricing.base_price) }}</strong>
+          </div>
+
+          <div class="pricing-row">
+            <span>Distance fee</span>
+            <strong>{{ formatCurrency(pricing.distance_fee) }}</strong>
+          </div>
+
+          <div
+            v-if="pricing.additional_fee > 0"
+            class="pricing-row"
+          >
+            <span>Service fee</span>
+            <strong>{{ formatCurrency(pricing.additional_fee) }}</strong>
+          </div>
+
+          <div class="pricing-row">
+            <span>Minimum price</span>
+            <strong>{{ formatCurrency(pricing.minimum_price) }}</strong>
+          </div>
+
+          <div class="pricing-total">
+            <span>Total estimated price</span>
+            <strong>{{ formatCurrency(pricing.total_price) }}</strong>
+          </div>
+
+          <p class="pricing-disclaimer">
+            Final price will be recalculated by the server when the order is created.
+          </p>
+        </div>
+
+        <p v-else-if="pricingError" class="form-error">
+          {{ pricingError }}
+        </p>
+
+        <p v-else class="pricing-placeholder">
+          Select pickup and delivery locations to calculate the price.
+        </p>
+      </div>
+
       <p v-if="errorMessage" class="form-error">
         {{ errorMessage }}
       </p>
@@ -254,10 +449,17 @@ const submitOrder = async () => {
       <button
         class="submit-btn"
         type="submit"
-        :disabled="loading"
+        :disabled="loading || pricingLoading"
       >
-        {{ loading ? 'Creating delivery...' : 'Create delivery →' }}
+        {{
+          loading
+            ? 'Creating delivery...'
+            : pricingLoading
+              ? 'Calculating price...'
+              : 'Create delivery →'
+        }}
       </button>
     </form>
   </main>
 </template>
+

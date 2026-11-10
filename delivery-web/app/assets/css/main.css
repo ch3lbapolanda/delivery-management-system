@@ -5334,3 +5334,64 @@ button {
   font-size: 13px;
   line-height: 1.6;
 }
+
+
+
+.pricing-section {
+  margin-top: 8px;
+}
+
+.pricing-loading,
+.pricing-placeholder {
+  padding: 16px;
+  color: var(--km-muted);
+  background: var(--km-surface-2);
+  border: 1px solid var(--km-border);
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.pricing-card {
+  padding: 16px;
+  background: var(--km-surface-2);
+  border: 1px solid var(--km-border);
+  border-radius: 14px;
+}
+
+.pricing-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  color: var(--km-muted);
+  font-size: 13px;
+}
+
+.pricing-row strong {
+  color: var(--km-text);
+  text-align: right;
+}
+
+.pricing-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 15px;
+  border-top: 1px solid var(--km-border);
+  color: var(--km-text);
+  font-weight: 700;
+}
+
+.pricing-total strong {
+  color: var(--km-gold-light);
+  font-size: 20px;
+}
+
+.pricing-disclaimer {
+  margin-top: 12px;
+  color: var(--km-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
