@@ -26,7 +26,18 @@ interface OrderEta {
   estimated_arrival_at: string | null
   message: string
 }
-  
+
+interface DeliveryProof {
+  id: number
+  order_id: number
+  uploaded_by: Person | null
+  photo_path: string
+  photo_url: string
+  recipient_name: string
+  notes: string | null
+  created_at: string
+}
+
 interface Order {
   id: number
   order_number: string
@@ -44,6 +55,7 @@ interface Order {
   eta?: OrderEta
   customer: Person | null
   status_histories: StatusHistory[]
+  delivery_proof?: DeliveryProof | null
 }
 
 interface OrderResponse {
@@ -58,8 +70,20 @@ const api = useApi()
 const order = ref<Order | null>(null)
 const loading = ref(true)
 const updating = ref(false)
+const uploading = ref(false)
+const compressing = ref(false)
+
 const error = ref('')
 const actionMessage = ref('')
+const uploadError = ref('')
+
+const photoFile = ref<File | null>(null)
+const photoPreview = ref('')
+const originalPhotoSize = ref(0)
+const recipientName = ref('')
+const proofNotes = ref('')
+
+const fileInput = ref<HTMLInputElement | null>(null)
 
 const fetchOrder = async () => {
   loading.value = true
@@ -84,14 +108,12 @@ const fetchOrder = async () => {
 
 const nextStatus: Record<string, string> = {
   assigned: 'picked_up',
-  picked_up: 'in_transit',
-  in_transit: 'delivered'
+  picked_up: 'in_transit'
 }
 
 const actionLabels: Record<string, string> = {
   assigned: 'Mark as Picked Up',
-  picked_up: 'Start Delivery',
-  in_transit: 'Mark as Delivered'
+  picked_up: 'Start Delivery'
 }
 
 const statusLabels: Record<string, string> = {
@@ -123,7 +145,14 @@ const formatDate = (date: string | null) => {
   })
 }
 
-// Ambil riwayat penugasan kurir.
+const formatSize = (size: number) => {
+  if (size < 1024 * 1024) {
+    return `${(size / 1024).toFixed(0)} KB`
+  }
+
+  return `${(size / (1024 * 1024)).toFixed(2)} MB`
+}
+
 const assignmentHistory = computed(() => {
   const histories = order.value?.status_histories || []
 
@@ -148,8 +177,7 @@ const updateStatus = async () => {
 
   const notes: Record<string, string> = {
     picked_up: 'Barang sudah dijemput kurir.',
-    in_transit: 'Barang sedang dalam perjalanan.',
-    delivered: 'Barang sudah diterima penerima.'
+    in_transit: 'Barang sedang dalam perjalanan.'
   }
 
   try {
@@ -176,6 +204,189 @@ const updateStatus = async () => {
   }
 }
 
+// Kompresi foto di browser.
+const compressImage = async (file: File): Promise<File> => {
+  const bitmap = await createImageBitmap(file)
+
+  try {
+    const maxDimension = 1600
+
+    const scale = Math.min(
+      1,
+      maxDimension / Math.max(bitmap.width, bitmap.height)
+    )
+
+    const width = Math.round(bitmap.width * scale)
+    const height = Math.round(bitmap.height * scale)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+
+    const context = canvas.getContext('2d')
+
+    if (!context) {
+      throw new Error('Tidak dapat memproses foto.')
+    }
+
+    context.drawImage(bitmap, 0, 0, width, height)
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        result => {
+          if (result) resolve(result)
+          else reject(new Error('Gagal mengompres foto.'))
+        },
+        'image/jpeg',
+        0.78
+      )
+    })
+
+    return new File(
+      [blob],
+      file.name.replace(/\.[^.]+$/, '') + '.jpg',
+      {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      }
+    )
+  } finally {
+    bitmap.close()
+  }
+}
+
+const handlePhotoChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+
+  uploadError.value = ''
+  actionMessage.value = ''
+
+  if (!file) return
+
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+  ]
+
+  if (!allowedTypes.includes(file.type)) {
+    uploadError.value = 'Format foto harus JPG, PNG, atau WebP.'
+    input.value = ''
+    return
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    uploadError.value = 'Foto asli maksimal 20 MB.'
+    input.value = ''
+    return
+  }
+
+  compressing.value = true
+  originalPhotoSize.value = file.size
+
+  try {
+    const compressedFile = await compressImage(file)
+
+    if (compressedFile.size > 5 * 1024 * 1024) {
+      uploadError.value =
+        'Foto setelah kompresi masih melebihi 5 MB.'
+      input.value = ''
+      return
+    }
+
+    if (photoPreview.value) {
+      URL.revokeObjectURL(photoPreview.value)
+    }
+
+    photoFile.value = compressedFile
+    photoPreview.value = URL.createObjectURL(compressedFile)
+
+    actionMessage.value =
+      `Foto berhasil dikompres: ${formatSize(file.size)} → ${formatSize(compressedFile.size)}`
+  } catch (err: any) {
+    uploadError.value =
+      err?.message || 'Gagal memproses foto.'
+    input.value = ''
+  } finally {
+    compressing.value = false
+  }
+}
+
+const removePhoto = () => {
+  if (photoPreview.value) {
+    URL.revokeObjectURL(photoPreview.value)
+  }
+
+  photoFile.value = null
+  photoPreview.value = ''
+  originalPhotoSize.value = 0
+  actionMessage.value = ''
+  uploadError.value = ''
+
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+const uploadProof = async () => {
+  if (!order.value || uploading.value || compressing.value) return
+
+  uploadError.value = ''
+
+  if (order.value.status !== 'in_transit') {
+    uploadError.value =
+      'Bukti hanya dapat diunggah saat order dalam perjalanan.'
+    return
+  }
+
+  if (!photoFile.value) {
+    uploadError.value = 'Silakan pilih foto bukti pengiriman.'
+    return
+  }
+
+  if (!recipientName.value.trim()) {
+    uploadError.value = 'Nama penerima wajib diisi.'
+    return
+  }
+
+  const formData = new FormData()
+
+  formData.append('photo', photoFile.value)
+  formData.append('recipient_name', recipientName.value.trim())
+
+  if (proofNotes.value.trim()) {
+    formData.append('notes', proofNotes.value.trim())
+  }
+
+  uploading.value = true
+  actionMessage.value = ''
+
+  try {
+    await api(
+      `/courier/orders/${order.value.id}/proof`,
+      {
+        method: 'POST',
+        body: formData
+      }
+    )
+
+    removePhoto()
+    recipientName.value = ''
+    proofNotes.value = ''
+
+    await fetchOrder()
+
+    actionMessage.value =
+      'Bukti berhasil diunggah. Pengiriman telah selesai!'
+  } catch (err: any) {
+    uploadError.value =
+      err?.data?.message || 'Gagal mengunggah bukti pengiriman.'
+  } finally {
+    uploading.value = false
+  }
+}
+
 const actionButtonLabel = computed(() => {
   if (!order.value) return ''
 
@@ -183,7 +394,15 @@ const actionButtonLabel = computed(() => {
 })
 
 onMounted(fetchOrder)
+
+onUnmounted(() => {
+  if (photoPreview.value) {
+    URL.revokeObjectURL(photoPreview.value)
+  }
+})
 </script>
+
+
 
 <template>
   <main class="courier-detail">
@@ -241,56 +460,56 @@ onMounted(fetchOrder)
         </div>
       </section>
 
-      
-<section class="courier-detail-card eta-card">
-  <span class="courier-detail-eyebrow">
-    DELIVERY ESTIMATE
-  </span>
+      <!-- ETA -->
+      <section class="courier-detail-card eta-card">
+        <span class="courier-detail-eyebrow">
+          DELIVERY ESTIMATE
+        </span>
 
-  <h3>Estimated Arrival</h3>
+        <h3>Estimated Arrival</h3>
 
-  <template v-if="order.eta?.available">
-    <div class="eta-highlight">
-      {{ order.eta.duration_minutes }} minutes
-    </div>
+        <template v-if="order.eta?.available">
+          <div class="eta-highlight">
+            {{ order.eta.duration_minutes }} minutes
+          </div>
 
-    <div class="eta-info">
-      <div class="eta-info-row">
-        <span>Estimated Distance</span>
-        <strong>{{ order.eta.distance_km }} km</strong>
-      </div>
+          <div class="eta-info">
+            <div class="eta-info-row">
+              <span>Estimated Distance</span>
+              <strong>{{ order.eta.distance_km }} km</strong>
+            </div>
 
-      <div class="eta-info-row">
-        <span>Travel Duration</span>
-        <strong>{{ order.eta.duration_minutes }} minutes</strong>
-      </div>
+            <div class="eta-info-row">
+              <span>Travel Duration</span>
+              <strong>{{ order.eta.duration_minutes }} minutes</strong>
+            </div>
 
-      <div class="eta-info-row">
-        <span>Estimated Arrival</span>
-        <strong>
-          {{ formatDate(order.eta.estimated_arrival_at) }}
-        </strong>
-      </div>
-    </div>
+            <div class="eta-info-row">
+              <span>Estimated Arrival</span>
+              <strong>
+                {{ formatDate(order.eta.estimated_arrival_at) }}
+              </strong>
+            </div>
+          </div>
 
-    <p class="eta-disclaimer">
-      {{ order.eta.message }}
-    </p>
-  </template>
+          <p class="eta-disclaimer">
+            {{ order.eta.message }}
+          </p>
+        </template>
 
-  <template v-else>
-    <p class="eta-unavailable">
-      {{ order.eta?.message || 'ETA belum tersedia.' }}
-    </p>
+        <template v-else>
+          <p class="eta-unavailable">
+            {{ order.eta?.message || 'ETA belum tersedia.' }}
+          </p>
 
-    <p class="eta-disclaimer">
-      Estimasi tersedia setelah perjalanan dimulai
-      dan koordinat pickup serta tujuan tersedia.
-    </p>
-  </template>
-</section>
+          <p class="eta-disclaimer">
+            Estimasi tersedia setelah perjalanan dimulai
+            dan koordinat pickup serta tujuan tersedia.
+          </p>
+        </template>
+      </section>
 
-
+      <!-- PICKUP -->
       <section class="courier-detail-card">
         <h3>Pickup Information</h3>
 
@@ -305,6 +524,7 @@ onMounted(fetchOrder)
         </div>
       </section>
 
+      <!-- DELIVERY -->
       <section class="courier-detail-card">
         <h3>Delivery Information</h3>
 
@@ -319,7 +539,7 @@ onMounted(fetchOrder)
         </div>
       </section>
 
-      <!-- ASSIGNMENT INFORMATION -->
+      <!-- ASSIGNMENT -->
       <section
         v-if="assignmentHistory"
         class="courier-detail-card"
@@ -348,6 +568,7 @@ onMounted(fetchOrder)
         </div>
       </section>
 
+      <!-- SCHEDULE -->
       <section class="courier-detail-card">
         <h3>Delivery Schedule</h3>
 
@@ -367,6 +588,7 @@ onMounted(fetchOrder)
         </div>
       </section>
 
+      <!-- DELIVERY PROGRESS -->
       <section class="courier-action-card">
         <span class="courier-detail-eyebrow">
           DELIVERY PROGRESS
@@ -382,8 +604,14 @@ onMounted(fetchOrder)
           Pesanan ini telah dibatalkan.
         </p>
 
+        <p v-else-if="order.status === 'in_transit'">
+          Barang sedang dalam perjalanan. Setelah diterima,
+          unggah foto bukti pengiriman di bawah.
+        </p>
+
         <p v-else>
-          Perbarui status setelah setiap tahap pengiriman benar-benar selesai.
+          Perbarui status setelah setiap tahap pengiriman
+          benar-benar selesai.
         </p>
 
         <button
@@ -410,6 +638,166 @@ onMounted(fetchOrder)
         </div>
       </section>
 
+      <!-- UPLOAD PROOF -->
+      <section
+        v-if="order.status === 'in_transit' && !order.delivery_proof"
+        class="courier-detail-card courier-proof-form"
+      >
+        <span class="courier-detail-eyebrow">
+          FINAL DELIVERY STEP
+        </span>
+
+        <h3>Upload Proof of Delivery</h3>
+
+        <p class="proof-description">
+          Ambil foto atau pilih foto barang yang sudah diterima
+          sebagai bukti penyelesaian pengiriman.
+        </p>
+
+        <div class="proof-field">
+          <label>Delivery Photo *</label>
+
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            capture="environment"
+            @change="handlePhotoChange"
+          />
+
+          <small>JPG, PNG atau WebP. Foto asli maksimal 20 MB.</small>
+        </div>
+
+        <div v-if="compressing" class="proof-processing">
+          Mengompres foto...
+        </div>
+
+        <div v-if="photoPreview" class="proof-preview">
+          <img
+            :src="photoPreview"
+            alt="Delivery proof preview"
+          />
+
+          <div class="proof-size-info">
+            <span>Original: {{ formatSize(originalPhotoSize) }}</span>
+            <span>Compressed: {{ formatSize(photoFile?.size || 0) }}</span>
+          </div>
+
+          <button
+            type="button"
+            class="proof-remove-button"
+            :disabled="uploading || compressing"
+            @click="removePhoto"
+          >
+            Remove Photo
+          </button>
+        </div>
+
+        <div class="proof-field">
+          <label>Recipient Name *</label>
+
+          <input
+            v-model="recipientName"
+            type="text"
+            maxlength="255"
+            placeholder="Nama orang yang menerima barang"
+            :disabled="uploading"
+          />
+        </div>
+
+        <div class="proof-field">
+          <label>Delivery Notes</label>
+
+          <textarea
+            v-model="proofNotes"
+            maxlength="1000"
+            rows="4"
+            placeholder="Catatan tambahan pengiriman (opsional)"
+            :disabled="uploading"
+          />
+        </div>
+
+        <p v-if="uploadError" class="proof-error">
+          {{ uploadError }}
+        </p>
+
+        <button
+          class="proof-submit-button"
+          :disabled="uploading || compressing"
+          @click="uploadProof"
+        >
+          {{
+            compressing
+              ? 'Compressing Photo...'
+              : uploading
+                ? 'Uploading Proof...'
+                : 'Submit Delivery Proof'
+          }}
+        </button>
+
+        <p class="proof-warning">
+          Setelah bukti berhasil diunggah, status order otomatis
+          berubah menjadi Delivered dan tidak dapat diunggah ulang.
+        </p>
+      </section>
+
+      <!-- COMPLETED PROOF -->
+      <section
+        v-if="order.delivery_proof"
+        class="courier-detail-card courier-proof-result"
+      >
+        <span class="courier-detail-eyebrow">
+          DELIVERY CONFIRMATION
+        </span>
+
+        <h3>Proof of Delivery</h3>
+
+        <div class="proof-completed-status">
+          <span>✓</span>
+          Delivery successfully completed
+        </div>
+
+        <a
+          :href="order.delivery_proof.photo_url"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            :src="order.delivery_proof.photo_url"
+            alt="Delivery proof photo"
+            class="proof-result-image"
+          />
+        </a>
+
+        <div class="courier-info-row">
+          <span>Received By</span>
+          <strong>{{ order.delivery_proof.recipient_name }}</strong>
+        </div>
+
+        <div class="courier-info-row">
+          <span>Uploaded By</span>
+          <strong>
+            {{ order.delivery_proof.uploaded_by?.name || 'Courier' }}
+          </strong>
+        </div>
+
+        <div class="courier-info-row">
+          <span>Upload Time</span>
+          <strong>
+            {{ formatDate(order.delivery_proof.created_at) }}
+          </strong>
+        </div>
+
+        <div
+          v-if="order.delivery_proof.notes"
+          class="courier-notes"
+        >
+          <span>Courier Notes</span>
+          <p>{{ order.delivery_proof.notes }}</p>
+        </div>
+      </section>
+
+      <!-- DELIVERY HISTORY -->
       <section class="courier-detail-card">
         <h3>Delivery History</h3>
 
@@ -450,4 +838,3 @@ onMounted(fetchOrder)
 
   </main>
 </template>
-

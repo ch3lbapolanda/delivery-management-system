@@ -4955,3 +4955,304 @@ button {
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
+
+
+/* Courier Proof of Delivery Form */
+.courier-proof-form {
+  border-color: rgba(242, 179, 75, 0.3);
+}
+
+.proof-description {
+  margin: 10px 0 20px;
+  color: var(--km-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.proof-field {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.proof-field label {
+  color: var(--km-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.proof-field input[type="text"],
+.proof-field input[type="file"],
+.proof-field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--km-border);
+  border-radius: 10px;
+  background: var(--km-surface-2);
+  color: var(--km-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.proof-field input[type="file"] {
+  padding: 11px;
+}
+
+.proof-field input:focus,
+.proof-field textarea:focus {
+  outline: none;
+  border-color: var(--km-gold);
+}
+
+.proof-field small {
+  color: var(--km-muted);
+  font-size: 11px;
+}
+
+.proof-preview {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.proof-preview img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--km-surface-2);
+}
+
+.proof-remove-button {
+  justify-self: start;
+  padding: 8px 12px;
+  border: 1px solid var(--km-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--km-red);
+  font-size: 12px;
+}
+
+.proof-submit-button {
+  width: 100%;
+  margin-top: 22px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--km-gold);
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.proof-submit-button:disabled,
+.proof-remove-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.proof-error {
+  margin-top: 14px;
+  color: var(--km-red);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.proof-warning {
+  margin-top: 13px;
+  color: var(--km-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.courier-proof-result {
+  border-color: rgba(82, 214, 160, 0.3);
+}
+
+.proof-completed-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 16px 0;
+  color: var(--km-green);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.proof-completed-status span {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: rgba(82, 214, 160, 0.12);
+}
+
+.proof-result-image {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: var(--km-surface-2);
+}
+
+
+/* Courier Proof of Delivery Form */
+.courier-proof-form {
+  border-color: rgba(242, 179, 75, 0.3);
+}
+
+.proof-description {
+  margin: 10px 0 20px;
+  color: var(--km-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.proof-field {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.proof-field label {
+  color: var(--km-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.proof-field input[type="text"],
+.proof-field input[type="file"],
+.proof-field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--km-border);
+  border-radius: 10px;
+  background: var(--km-surface-2);
+  color: var(--km-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.proof-field input[type="file"] {
+  padding: 11px;
+}
+
+.proof-field input:focus,
+.proof-field textarea:focus {
+  outline: none;
+  border-color: var(--km-gold);
+}
+
+.proof-field small {
+  color: var(--km-muted);
+  font-size: 11px;
+}
+
+.proof-preview {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.proof-preview img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--km-surface-2);
+}
+
+.proof-remove-button {
+  justify-self: start;
+  padding: 8px 12px;
+  border: 1px solid var(--km-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--km-red);
+  font-size: 12px;
+}
+
+.proof-submit-button {
+  width: 100%;
+  margin-top: 22px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--km-gold);
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.proof-submit-button:disabled,
+.proof-remove-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.proof-error {
+  margin-top: 14px;
+  color: var(--km-red);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.proof-warning {
+  margin-top: 13px;
+  color: var(--km-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.courier-proof-result {
+  border-color: rgba(82, 214, 160, 0.3);
+}
+
+.proof-completed-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 16px 0;
+  color: var(--km-green);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.proof-completed-status span {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: rgba(82, 214, 160, 0.12);
+}
+
+.proof-result-image {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: var(--km-surface-2);
+}
+
+.proof-processing {
+  margin-top: 14px;
+  color: var(--km-gold);
+  font-size: 12px;
+}
+
+.proof-size-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--km-green);
+  font-size: 11px;
+}
