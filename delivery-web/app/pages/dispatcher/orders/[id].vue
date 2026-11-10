@@ -19,6 +19,25 @@ interface StatusHistory {
   changed_by: Person | null
 }
 
+interface OrderEta {
+  available: boolean
+  distance_km: number | null
+  duration_minutes: number | null
+  estimated_arrival_at: string | null
+  message: string
+}
+
+interface DeliveryProof {
+  id: number
+  order_id: number
+  uploaded_by: Person | null
+  photo_path: string
+  photo_url: string
+  recipient_name: string
+  notes: string | null
+  created_at: string
+}
+
 interface Order {
   id: number
   order_number: string
@@ -30,17 +49,20 @@ interface Order {
   recipient_name: string
   recipient_phone: string
   delivery_address: string
+  eta?: OrderEta
   scheduled_pickup_at: string | null
   notes: string | null
   price: string | number | null
   customer: Person | null
   courier: Person | null
   status_histories: StatusHistory[]
+  delivery_proof?: DeliveryProof | null
 }
 
 interface OrderResponse {
   message: string
   data: Order
+  eta?: OrderEta
 }
 
 interface Courier {
@@ -78,7 +100,10 @@ const fetchOrder = async () => {
       `/dispatcher/orders/${route.params.id}`
     )
 
-    order.value = response.data
+    order.value = {
+      ...response.data,
+      eta: response.eta
+    }
   } catch (err: any) {
     error.value =
       err?.data?.message || 'Gagal mengambil detail pesanan.'
@@ -171,7 +196,6 @@ const statusClass = (status: string) => {
   return `status-${status}`
 }
 
-// Ambil riwayat assignment terbaru.
 const assignmentHistory = computed(() => {
   const histories = order.value?.status_histories || []
 
@@ -237,6 +261,51 @@ onMounted(fetchOrder)
           </span>
           <span>Order ID: {{ order.id }}</span>
         </div>
+      </section>
+
+      <section class="detail-card eta-card">
+        <span class="eyebrow">DELIVERY ESTIMATE</span>
+        <h3>Estimated Arrival</h3>
+
+        <template v-if="order.eta?.available">
+          <div class="eta-highlight">
+            {{ order.eta.duration_minutes }} minutes
+          </div>
+
+          <div class="eta-info">
+            <div class="eta-info-row">
+              <span>Estimated Distance</span>
+              <strong>{{ order.eta.distance_km }} km</strong>
+            </div>
+
+            <div class="eta-info-row">
+              <span>Travel Duration</span>
+              <strong>{{ order.eta.duration_minutes }} minutes</strong>
+            </div>
+
+            <div class="eta-info-row">
+              <span>Estimated Arrival</span>
+              <strong>
+                {{ formatDate(order.eta.estimated_arrival_at) }}
+              </strong>
+            </div>
+          </div>
+
+          <p class="eta-disclaimer">
+            {{ order.eta.message }}
+          </p>
+        </template>
+
+        <template v-else>
+          <p class="eta-unavailable">
+            {{ order.eta?.message || 'ETA belum tersedia.' }}
+          </p>
+
+          <p class="eta-disclaimer">
+            Estimasi tersedia setelah kurir memulai perjalanan
+            dan koordinat pickup serta tujuan tersedia.
+          </p>
+        </template>
       </section>
 
       <section class="detail-card">
@@ -363,6 +432,69 @@ onMounted(fetchOrder)
         <div v-if="order.notes" class="notes-box">
           <span>Customer Notes</span>
           <p>{{ order.notes }}</p>
+        </div>
+      </section>
+
+      <!-- PROOF OF DELIVERY -->
+      <section
+        v-if="order.delivery_proof"
+        class="detail-card dispatcher-pod-card"
+      >
+        <span class="eyebrow">DELIVERY CONFIRMATION</span>
+        <h3>Proof of Delivery</h3>
+
+        <div class="dispatcher-pod-status">
+          <span class="dispatcher-pod-check">✓</span>
+          <strong>Delivery successfully completed</strong>
+        </div>
+
+        <div class="dispatcher-pod-image-wrapper">
+          <a
+            :href="order.delivery_proof.photo_url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              :src="order.delivery_proof.photo_url"
+              alt="Delivery proof photo"
+              class="dispatcher-pod-image"
+            />
+          </a>
+
+          <p class="dispatcher-pod-caption">
+            Tap image to view full size
+          </p>
+        </div>
+
+        <div class="dispatcher-pod-info">
+          <div class="dispatcher-pod-info-row">
+            <span>Received By</span>
+            <strong>
+              {{ order.delivery_proof.recipient_name }}
+            </strong>
+          </div>
+
+          <div class="dispatcher-pod-info-row">
+            <span>Uploaded By</span>
+            <strong>
+              {{ order.delivery_proof.uploaded_by?.name || 'Courier' }}
+            </strong>
+          </div>
+
+          <div class="dispatcher-pod-info-row">
+            <span>Upload Time</span>
+            <strong>
+              {{ formatDate(order.delivery_proof.created_at) }}
+            </strong>
+          </div>
+        </div>
+
+        <div
+          v-if="order.delivery_proof.notes"
+          class="dispatcher-pod-notes"
+        >
+          <span class="eyebrow">COURIER NOTES</span>
+          <p>{{ order.delivery_proof.notes }}</p>
         </div>
       </section>
 
@@ -496,6 +628,4 @@ onMounted(fetchOrder)
 
   </main>
 </template>
-
-
 

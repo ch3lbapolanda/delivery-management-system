@@ -4871,3 +4871,87 @@ button {
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
+
+
+/* Dispatcher Proof of Delivery */
+.dispatcher-pod-card {
+  border-color: rgba(82, 214, 160, 0.3);
+}
+
+.dispatcher-pod-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  color: var(--km-green);
+  font-size: 13px;
+}
+
+.dispatcher-pod-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(82, 214, 160, 0.12);
+  font-weight: 700;
+}
+
+.dispatcher-pod-image-wrapper {
+  margin: 16px 0;
+}
+
+.dispatcher-pod-image {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--km-surface-2);
+}
+
+.dispatcher-pod-caption {
+  margin-top: 8px;
+  color: var(--km-muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.dispatcher-pod-info {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.dispatcher-pod-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dispatcher-pod-info-row span {
+  color: var(--km-muted);
+  font-size: 12px;
+}
+
+.dispatcher-pod-info-row strong {
+  color: var(--km-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.dispatcher-pod-notes {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--km-surface-2);
+}
+
+.dispatcher-pod-notes p {
+  margin-top: 8px;
+  color: var(--km-text);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
