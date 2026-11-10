@@ -4,14 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\DeliveryEtaService;
+use App\Services\DeliveryPricingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class OrderController extends Controller
 {
-    public function store(Request $request, DeliveryEtaService $etaService)
-    {
+    public function store(
+        Request $request,
+        DeliveryEtaService $etaService,
+        DeliveryPricingService $pricingService
+    ) {
         $validated = $request->validate([
             'delivery_type' => 'required|in:instant,scheduled',
 
@@ -19,15 +24,15 @@ class OrderController extends Controller
             'sender_phone' => 'required|string|max:30',
 
             'pickup_address' => 'required|string',
-            'pickup_latitude' => 'nullable|numeric|between:-90,90',
-            'pickup_longitude' => 'nullable|numeric|between:-180,180',
+            'pickup_latitude' => 'required|numeric|between:-90,90',
+            'pickup_longitude' => 'required|numeric|between:-180,180',
 
             'recipient_name' => 'required|string|max:255',
             'recipient_phone' => 'required|string|max:30',
 
             'delivery_address' => 'required|string',
-            'delivery_latitude' => 'nullable|numeric|between:-90,90',
-            'delivery_longitude' => 'nullable|numeric|between:-180,180',
+            'delivery_latitude' => 'required|numeric|between:-90,90',
+            'delivery_longitude' => 'required|numeric|between:-180,180',
 
             'scheduled_pickup_at' => [
                 'nullable',
@@ -40,7 +45,25 @@ class OrderController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $order = DB::transaction(function () use ($validated, $request) {
+        try {
+            $pricing = $pricingService->calculate(
+                $validated['delivery_type'],
+                (float) $validated['pickup_latitude'],
+                (float) $validated['pickup_longitude'],
+                (float) $validated['delivery_latitude'],
+                (float) $validated['delivery_longitude']
+            );
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        $order = DB::transaction(function () use (
+            $validated,
+            $request,
+            $pricing
+        ) {
             $order = Order::create([
                 ...$validated,
 
@@ -50,6 +73,7 @@ class OrderController extends Controller
 
                 'customer_id' => $request->user()->id,
                 'status' => 'pending',
+                'price' => $pricing['total_price'],
             ]);
 
             $order->statusHistories()->create([
@@ -67,6 +91,7 @@ class OrderController extends Controller
         return response()->json([
             'message' => 'Order created successfully.',
             'data' => $order,
+            'pricing' => $pricing,
             'eta' => $etaService->calculate($order),
         ], 201);
     }
@@ -78,20 +103,22 @@ class OrderController extends Controller
         $orders = $request->user()
             ->customerOrders()
             ->with([
-    'statusHistories',
-    'deliveryProof.uploadedBy:id,name',
-])
+                'statusHistories',
+                'deliveryProof.uploadedBy:id,name',
+            ])
             ->latest()
             ->paginate(10);
 
-        $orders->getCollection()->transform(function ($order) use ($etaService) {
-            $order->setAttribute(
-                'eta',
-                $etaService->calculate($order)
-            );
+        $orders->getCollection()->transform(
+            function ($order) use ($etaService) {
+                $order->setAttribute(
+                    'eta',
+                    $etaService->calculate($order)
+                );
 
-            return $order;
-        });
+                return $order;
+            }
+        );
 
         return response()->json([
             'message' => 'Orders retrieved successfully.',
@@ -108,7 +135,11 @@ class OrderController extends Controller
             'cancellation_reason' => 'required|string|max:1000',
         ]);
 
-        $order = DB::transaction(function () use ($request, $id, $validated) {
+        $order = DB::transaction(function () use (
+            $request,
+            $id,
+            $validated
+        ) {
             $order = $request->user()
                 ->customerOrders()
                 ->whereKey($id)
@@ -151,9 +182,9 @@ class OrderController extends Controller
         $order = $request->user()
             ->customerOrders()
             ->with([
-    'statusHistories',
-    'deliveryProof.uploadedBy:id,name',
-])
+                'statusHistories',
+                'deliveryProof.uploadedBy:id,name',
+            ])
             ->findOrFail($id);
 
         return response()->json([
