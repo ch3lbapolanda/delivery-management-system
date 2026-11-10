@@ -5395,3 +5395,44 @@ button {
   font-size: 11px;
   line-height: 1.6;
 }
+
+.order-price-card {
+  border-color: rgba(242, 179, 75, 0.3);
+}
+
+.order-price-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  color: var(--km-muted);
+  font-size: 13px;
+}
+
+.order-price-row strong {
+  color: var(--km-text);
+}
+
+.order-price-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--km-border);
+  color: var(--km-text);
+  font-weight: 700;
+}
+
+.order-price-total strong {
+  color: var(--km-gold-light);
+  font-size: 21px;
+}
+
+.order-price-note {
+  margin-top: 12px;
+  color: var(--km-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}

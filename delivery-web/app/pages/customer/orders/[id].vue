@@ -39,6 +39,7 @@ interface Order {
   order_number: string
   delivery_type: string
   status: string
+  price: string | number | null
   sender_name: string
   sender_phone: string
   pickup_address: string
@@ -133,6 +134,18 @@ const submitCancellation = async () => {
   }
 }
 
+const formatCurrency = (value: string | number | null) => {
+  if (value === null || value === undefined) {
+    return 'Price unavailable'
+  }
+
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0
+  }).format(Number(value))
+}
+  
 const formatDate = (date: string) => {
   return new Date(date).toLocaleString('en-US', {
     dateStyle: 'medium',
@@ -191,6 +204,28 @@ onMounted(() => {
     </div>
 
     <template v-else-if="order">
+
+            <section class="detail-card order-price-card">
+        <span class="eyebrow">PAYMENT INFORMATION</span>
+        <h3>Delivery price</h3>
+
+        <div class="order-price-row">
+          <span>Service type</span>
+          <strong>
+            {{ order.delivery_type === 'instant' ? 'Instant' : 'Scheduled' }}
+          </strong>
+        </div>
+
+        <div class="order-price-total">
+          <span>Total delivery price</span>
+          <strong>{{ formatCurrency(order.price) }}</strong>
+        </div>
+
+        <p class="order-price-note">
+          Final delivery price calculated by Kurir Malam.
+        </p>
+      </section>
+      
       <section class="detail-card">
         <span class="eyebrow">ORDER NUMBER</span>
         <h2>{{ order.order_number }}</h2>
