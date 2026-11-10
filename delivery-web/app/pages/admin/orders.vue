@@ -10,6 +10,17 @@ interface Person {
   email?: string
 }
 
+interface DeliveryProof {
+  id: number
+  order_id: number
+  uploaded_by: Person | null
+  photo_path: string
+  photo_url: string
+  recipient_name: string
+  notes: string | null
+  created_at: string
+}
+
 interface AdminOrder {
   id: number
   order_number: string
@@ -26,6 +37,7 @@ interface AdminOrder {
   price: number | string | null
   notes: string | null
   created_at: string
+  delivery_proof?: DeliveryProof | null
 }
 
 interface OrdersResponse {
@@ -40,7 +52,6 @@ interface OrdersResponse {
 
 const api = useApi()
 const route = useRoute()
-const { user } = useAuth()
 
 const orders = ref<AdminOrder[]>([])
 const loading = ref(true)
@@ -85,7 +96,9 @@ const formatDate = (date: string) => {
 }
 
 const formatPrice = (price: number | string | null) => {
-  if (price === null || price === '') return 'Belum ditentukan'
+  if (price === null || price === '') {
+    return 'Belum ditentukan'
+  }
 
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -110,6 +123,13 @@ const fetchOrders = async () => {
     currentPage.value = response.data.current_page || 1
     lastPage.value = response.data.last_page || 1
     totalOrders.value = response.data.total || 0
+
+    if (selectedOrder.value) {
+      selectedOrder.value =
+        orders.value.find(
+          order => order.id === selectedOrder.value?.id
+        ) || null
+    }
   } catch (error: any) {
     errorMessage.value =
       error?.data?.message || 'Failed to load orders.'
@@ -147,10 +167,13 @@ const goBack = () => {
 watch(
   () => route.query.status,
   (status) => {
-    if (typeof status === 'string' &&
-      filters.some(filter => filter.value === status)) {
+    if (
+      typeof status === 'string' &&
+      filters.some(filter => filter.value === status)
+    ) {
       selectedStatus.value = status
       currentPage.value = 1
+      selectedOrder.value = null
       fetchOrders()
     }
   }
@@ -192,7 +215,7 @@ onMounted(fetchOrders)
       </div>
 
       <div class="admin-detail-card admin-orders-summary">
-  <span class="admin-eyebrow">TOTAL ORDERS</span>
+        <span class="admin-eyebrow">TOTAL ORDERS</span>
         <h2>{{ totalOrders }}</h2>
         <p>Orders matching the selected filter.</p>
       </div>
@@ -291,6 +314,7 @@ onMounted(fetchOrders)
             <div class="admin-order-detail-spacing">
               <h4>Courier</h4>
               <p>{{ order.courier?.name || 'Not assigned' }}</p>
+              <p>{{ order.courier?.email || '-' }}</p>
             </div>
 
             <div class="admin-order-detail-spacing">
@@ -307,6 +331,82 @@ onMounted(fetchOrders)
               <h4>Customer Notes</h4>
               <p>{{ order.notes }}</p>
             </div>
+
+            <!-- PROOF OF DELIVERY -->
+            <div class="admin-order-detail-spacing admin-pod-section">
+              <h4>Proof of Delivery</h4>
+
+              <div
+                v-if="order.delivery_proof"
+                class="admin-pod-content"
+              >
+                <div class="admin-pod-status">
+                  <span>✓</span>
+                  Delivery proof available
+                </div>
+
+                <a
+                  :href="order.delivery_proof.photo_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="admin-pod-image-link"
+                >
+                  <img
+                    :src="order.delivery_proof.photo_url"
+                    alt="Proof of delivery"
+                    class="admin-pod-image"
+                  />
+                </a>
+
+                <div class="admin-pod-info">
+                  <div>
+                    <span>Received By</span>
+                    <strong>
+                      {{ order.delivery_proof.recipient_name }}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Uploaded By</span>
+                    <strong>
+                      {{ order.delivery_proof.uploaded_by?.name || 'Unknown' }}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Upload Time</span>
+                    <strong>
+                      {{ formatDate(order.delivery_proof.created_at) }}
+                    </strong>
+                  </div>
+
+                  <div v-if="order.delivery_proof.notes">
+                    <span>Courier Notes</span>
+                    <strong>{{ order.delivery_proof.notes }}</strong>
+                  </div>
+                </div>
+
+                <a
+                  :href="order.delivery_proof.photo_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="admin-pod-open-link"
+                >
+                  Open Full Image ↗
+                </a>
+              </div>
+
+              <div v-else class="admin-pod-empty">
+                <template v-if="order.status === 'delivered'">
+                  Order delivered, but no proof was uploaded.
+                </template>
+
+                <template v-else>
+                  No delivery proof available yet.
+                </template>
+              </div>
+            </div>
+
           </div>
         </article>
 

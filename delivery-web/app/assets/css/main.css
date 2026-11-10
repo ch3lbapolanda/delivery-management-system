@@ -5256,3 +5256,81 @@ button {
   color: var(--km-green);
   font-size: 11px;
 }
+
+
+/* ADMIN PROOF OF DELIVERY */
+
+.admin-pod-section {
+  border-top: 1px solid var(--km-border);
+  padding-top: 18px;
+  margin-top: 20px;
+}
+
+.admin-pod-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.admin-pod-status {
+  color: var(--km-green);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-pod-image-link {
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--km-border);
+}
+
+.admin-pod-image {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  background: var(--km-bg);
+}
+
+.admin-pod-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-pod-info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-pod-info span {
+  color: var(--km-muted);
+  font-size: 11px;
+}
+
+.admin-pod-info strong {
+  color: var(--km-text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.admin-pod-open-link {
+  color: var(--km-gold-light);
+  font-size: 13px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.admin-pod-empty {
+  margin-top: 12px;
+  padding: 14px;
+  background: var(--km-surface-2);
+  border: 1px solid var(--km-border);
+  border-radius: 10px;
+  color: var(--km-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
