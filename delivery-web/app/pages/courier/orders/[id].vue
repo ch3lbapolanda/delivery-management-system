@@ -145,6 +145,18 @@ const formatDate = (date: string | null) => {
   })
 }
 
+const formatCurrency = (value: string | number | null) => {
+  if (value === null || value === undefined) {
+    return 'Price unavailable'
+  }
+
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0
+  }).format(Number(value))
+}
+
 const formatSize = (size: number) => {
   if (size < 1024 * 1024) {
     return `${(size / 1024).toFixed(0)} KB`
@@ -459,6 +471,33 @@ onUnmounted(() => {
           </span>
         </div>
       </section>
+
+      
+      <!-- DELIVERY PRICE -->
+      <section class="courier-detail-card courier-price-card">
+        <span class="courier-detail-eyebrow">
+          PAYMENT INFORMATION
+        </span>
+
+        <h3>Delivery Price</h3>
+
+        <div class="courier-info-row">
+          <span>Service Type</span>
+          <strong>
+            {{ order.delivery_type === 'instant' ? 'Instant' : 'Scheduled' }}
+          </strong>
+        </div>
+
+        <div class="courier-price-total">
+          <span>Total Delivery Price</span>
+          <strong>{{ formatCurrency(order.price) }}</strong>
+        </div>
+
+        <p class="courier-price-note">
+          Final delivery price calculated by Kurir Malam.
+        </p>
+      </section>
+
 
       <!-- ETA -->
       <section class="courier-detail-card eta-card">
