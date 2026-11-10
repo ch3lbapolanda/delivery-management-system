@@ -21,6 +21,7 @@ class CourierOrderController extends Controller
             ->with([
                 'customer:id,name,email',
                 'statusHistories.changedBy:id,name',
+                'deliveryProof.uploadedBy:id,name',
             ])
             ->latest()
             ->paginate(10);
@@ -52,6 +53,7 @@ class CourierOrderController extends Controller
             ->with([
                 'customer:id,name,email',
                 'statusHistories.changedBy:id,name',
+                'deliveryProof.uploadedBy:id,name',
             ])
             ->findOrFail($id);
 
@@ -94,7 +96,6 @@ class CourierOrderController extends Controller
             $allowedTransitions = [
                 'assigned' => 'picked_up',
                 'picked_up' => 'in_transit',
-                'in_transit' => 'delivered',
             ];
 
             $nextStatus = $allowedTransitions[$order->status] ?? null;
@@ -126,6 +127,7 @@ class CourierOrderController extends Controller
         $order->load([
             'customer:id,name,email',
             'statusHistories.changedBy:id,name',
+            'deliveryProof.uploadedBy:id,name',
         ]);
 
         return response()->json([
@@ -135,5 +137,4 @@ class CourierOrderController extends Controller
         ]);
     }
 }
-
 

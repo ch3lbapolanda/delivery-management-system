@@ -131,9 +131,10 @@ class AdminDashboardController extends Controller
             : null;
 
         $recentOrders = Order::with([
-            'customer:id,name,email',
-            'courier:id,name,email',
-        ])
+    'customer:id,name,email',
+    'courier:id,name,email',
+    'deliveryProof.uploadedBy:id,name',
+])
             ->latest()
             ->take(10)
             ->get();
@@ -174,9 +175,10 @@ class AdminDashboardController extends Controller
         ]);
 
         $query = Order::with([
-            'customer:id,name,email',
-            'courier:id,name,email',
-        ])->latest();
+    'customer:id,name,email',
+    'courier:id,name,email',
+    'deliveryProof.uploadedBy:id,name',
+])->latest();
 
         $status = $validated['status'] ?? 'all';
 

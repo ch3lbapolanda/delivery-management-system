@@ -77,7 +77,10 @@ class OrderController extends Controller
     ) {
         $orders = $request->user()
             ->customerOrders()
-            ->with('statusHistories')
+            ->with([
+    'statusHistories',
+    'deliveryProof.uploadedBy:id,name',
+])
             ->latest()
             ->paginate(10);
 
@@ -147,7 +150,10 @@ class OrderController extends Controller
     ) {
         $order = $request->user()
             ->customerOrders()
-            ->with('statusHistories')
+            ->with([
+    'statusHistories',
+    'deliveryProof.uploadedBy:id,name',
+])
             ->findOrFail($id);
 
         return response()->json([

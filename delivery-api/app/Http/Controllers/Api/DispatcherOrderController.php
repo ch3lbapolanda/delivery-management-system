@@ -24,10 +24,11 @@ class DispatcherOrderController extends Controller
 
         $orders = Order::query()
             ->with([
-                'customer:id,name,email',
-                'courier:id,name',
-                'statusHistories',
-            ])
+    'customer:id,name,email',
+    'courier:id,name',
+    'statusHistories',
+    'deliveryProof.uploadedBy:id,name',
+])
             ->when(
                 isset($validated['status']),
                 fn ($query) => $query->where(
@@ -60,10 +61,11 @@ class DispatcherOrderController extends Controller
         DeliveryEtaService $etaService
     ): JsonResponse {
         $order = Order::with([
-            'customer:id,name,email',
-            'courier:id,name',
-            'statusHistories.changedBy:id,name',
-        ])->findOrFail($id);
+    'customer:id,name,email',
+    'courier:id,name',
+    'statusHistories.changedBy:id,name',
+    'deliveryProof.uploadedBy:id,name',
+])->findOrFail($id);
 
         return response()->json([
             'message' => 'Dispatcher order retrieved successfully.',
