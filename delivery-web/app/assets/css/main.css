@@ -5467,3 +5467,34 @@ button {
   font-size: 11px;
   line-height: 1.5;
 }
+
+
+
+.dispatcher-price-card {
+  border-color: rgba(242, 179, 75, 0.3);
+}
+
+.dispatcher-price-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--km-border);
+  color: var(--km-text);
+  font-weight: 700;
+}
+
+.dispatcher-price-total strong {
+  color: var(--km-gold-light);
+  font-size: 21px;
+  text-align: right;
+}
+
+.dispatcher-price-note {
+  margin-top: 12px;
+  color: var(--km-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}

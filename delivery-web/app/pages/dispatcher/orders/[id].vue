@@ -263,6 +263,36 @@ onMounted(fetchOrder)
         </div>
       </section>
 
+      
+      <!-- DELIVERY PRICE -->
+      <section class="detail-card dispatcher-price-card">
+        <span class="eyebrow">PAYMENT INFORMATION</span>
+
+        <h3>Delivery Price</h3>
+
+        <div class="info-row">
+          <span>Service Type</span>
+          <strong>
+            {{ order.delivery_type === 'instant' ? 'Instant' : 'Scheduled' }}
+          </strong>
+        </div>
+
+        <div class="dispatcher-price-total">
+          <span>Total Delivery Price</span>
+
+          <strong>
+            {{ order.price !== null
+              ? `Rp ${Number(order.price).toLocaleString('id-ID')}`
+              : 'Belum ditentukan' }}
+          </strong>
+        </div>
+
+        <p class="dispatcher-price-note">
+          Final delivery price calculated by Kurir Malam.
+        </p>
+      </section>
+
+
       <section class="detail-card eta-card">
         <span class="eyebrow">DELIVERY ESTIMATE</span>
         <h3>Estimated Arrival</h3>
@@ -420,14 +450,7 @@ onMounted(fetchOrder)
           <strong>{{ formatDate(order.scheduled_pickup_at) }}</strong>
         </div>
 
-        <div class="info-row">
-          <span>Delivery Price</span>
-          <strong>
-            {{ order.price !== null
-              ? `Rp ${Number(order.price).toLocaleString('id-ID')}`
-              : 'Belum ditentukan' }}
-          </strong>
-        </div>
+        
 
         <div v-if="order.notes" class="notes-box">
           <span>Customer Notes</span>
