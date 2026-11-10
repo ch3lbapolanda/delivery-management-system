@@ -5498,3 +5498,53 @@ button {
   font-size: 11px;
   line-height: 1.5;
 }
+
+.admin-price-card {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--km-surface-2);
+  border: 1px solid rgba(242, 179, 75, 0.3);
+  border-radius: 14px;
+}
+
+.admin-price-card h4 {
+  margin-top: 8px;
+}
+
+.admin-price-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  color: var(--km-muted);
+  font-size: 13px;
+}
+
+.admin-price-row strong {
+  color: var(--km-text);
+}
+
+.admin-price-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--km-border);
+  color: var(--km-text);
+  font-weight: 700;
+}
+
+.admin-price-total strong {
+  color: var(--km-gold-light);
+  font-size: 20px;
+  text-align: right;
+}
+
+.admin-price-note {
+  margin-top: 12px;
+  color: var(--km-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}

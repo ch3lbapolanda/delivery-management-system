@@ -292,6 +292,29 @@ onMounted(fetchOrders)
             class="admin-detail-card"
           >
             <h3>Order Details</h3>
+            
+            <div class="admin-price-card">
+              <span class="admin-eyebrow">PAYMENT INFORMATION</span>
+
+              <h4>Delivery Price</h4>
+
+              <div class="admin-price-row">
+                <span>Service Type</span>
+                <strong>
+                  {{ order.delivery_type === 'instant' ? 'Instant' : 'Scheduled' }}
+                </strong>
+              </div>
+
+              <div class="admin-price-total">
+                <span>Total Delivery Price</span>
+                <strong>{{ formatPrice(order.price) }}</strong>
+              </div>
+
+              <p class="admin-price-note">
+                Final delivery price calculated by Kurir Malam.
+              </p>
+            </div>
+
 
             <h4>Customer</h4>
             <p>{{ order.customer?.name || 'Unknown' }}</p>
@@ -317,10 +340,9 @@ onMounted(fetchOrders)
               <p>{{ order.courier?.email || '-' }}</p>
             </div>
 
-            <div class="admin-order-detail-spacing">
+              <div class="admin-order-detail-spacing">
               <h4>Delivery Information</h4>
               <p>{{ order.delivery_type }}</p>
-              <p>{{ formatPrice(order.price) }}</p>
               <p>{{ formatDate(order.created_at) }}</p>
             </div>
 
