@@ -53,13 +53,20 @@ class CourierDeliveryProofController extends Controller
                     ->lockForUpdate()
                     ->firstOrFail();
 
-                if ($order->status !== 'in_transit') {
-                    abort(
-                        422,
-                        'Proof can only be uploaded for orders in transit.'
-                    );
-                }
+                if ($order->deliveryProof()->exists()) {
+    abort(422, 'Delivery proof already exists.');
+}
 
+if ($order->deliveryProof()->exists()) {
+    abort(422, 'Delivery proof already exists.');
+}
+
+if ($order->status !== 'in_transit') {
+    abort(
+        422,
+        'Proof can only be uploaded for orders in transit.'
+    );
+}
                 if ($order->deliveryProof()->exists()) {
                     abort(422, 'Delivery proof already exists.');
                 }
