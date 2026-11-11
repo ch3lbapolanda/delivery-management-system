@@ -71,14 +71,29 @@ const formatDate = (date: string) => {
   })
 }
 
+
 const fetchOrders = async () => {
   loading.value = true
   errorMessage.value = ''
 
   try {
-    const response = await api<OrderResponse>('/orders')
+    const firstResponse = await api<OrderResponse>(
+      '/orders?page=1'
+    )
 
-    orders.value = response.data.data || []
+    const allOrders = [...firstResponse.data.data]
+    const lastPage = firstResponse.data.last_page
+
+    for (let page = 2; page <= lastPage; page++) {
+      const response = await api<OrderResponse>(
+        `/orders?page=${page}`
+      )
+
+      allOrders.push(...response.data.data)
+    }
+
+    orders.value = allOrders
+
   } catch (error: any) {
     errorMessage.value =
       error?.data?.message || 'Failed to load orders.'
@@ -86,6 +101,7 @@ const fetchOrders = async () => {
     loading.value = false
   }
 }
+
 
 const goToCreate = () => {
   navigateTo('/customer/create')
