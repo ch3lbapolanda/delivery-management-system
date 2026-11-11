@@ -230,6 +230,17 @@ const assignmentHistory = computed(() => {
     )[0] || null
 })
 
+const actualDeliveredAt = computed(() => {
+  const histories = order.value?.status_histories || []
+
+  return histories
+    .filter(history => history.new_status === 'delivered')
+    .sort((a, b) =>
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime()
+    )[0]?.created_at || null
+})
+
 onMounted(fetchOrder)
 </script>
 
@@ -356,50 +367,79 @@ onMounted(fetchOrder)
   </p>
 </section>
 
-      <section class="detail-card eta-card">
-        <span class="eyebrow">DELIVERY ESTIMATE</span>
-        <h3>Estimated Arrival</h3>
+    <section class="detail-card eta-card">
+  <span class="eyebrow">
+    DELIVERY ESTIMATE
+  </span>
 
-        <template v-if="order.eta?.available">
-          <div class="eta-highlight">
-            {{ order.eta.duration_minutes }} minutes
-          </div>
+  <template v-if="order.status === 'delivered'">
+    <h3>Delivery Completed</h3>
 
-          <div class="eta-info">
-            <div class="eta-info-row">
-              <span>Estimated Distance</span>
-              <strong>{{ order.eta.distance_km }} km</strong>
-            </div>
+    <div class="eta-highlight">
+      DELIVERED
+    </div>
 
-            <div class="eta-info-row">
-              <span>Travel Duration</span>
-              <strong>{{ order.eta.duration_minutes }} minutes</strong>
-            </div>
+    <div class="eta-info">
+      <div class="eta-info-row">
+        <span>Actual Delivery Time</span>
+        <strong v-if="actualDeliveredAt">
+          {{ formatDate(actualDeliveredAt) }}
+        </strong>
+        <strong v-else>
+          Waktu pengiriman tidak tersedia
+        </strong>
+      </div>
+    </div>
 
-            <div class="eta-info-row">
-              <span>Estimated Arrival</span>
-              <strong>
-                {{ formatDate(order.eta.estimated_arrival_at) }}
-              </strong>
-            </div>
-          </div>
+    <p class="eta-disclaimer">
+      Pesanan telah berhasil diterima dan diselesaikan.
+    </p>
+  </template>
 
-          <p class="eta-disclaimer">
-            {{ order.eta.message }}
-          </p>
-        </template>
+  <template v-else-if="order.eta?.available">
+    <h3>Estimated Arrival</h3>
 
-        <template v-else>
-          <p class="eta-unavailable">
-            {{ order.eta?.message || 'ETA belum tersedia.' }}
-          </p>
+    <div class="eta-highlight">
+      {{ order.eta.duration_minutes }} minutes
+    </div>
 
-          <p class="eta-disclaimer">
-            Estimasi tersedia setelah kurir memulai perjalanan
-            dan koordinat pickup serta tujuan tersedia.
-          </p>
-        </template>
-      </section>
+    <div class="eta-info">
+      <div class="eta-info-row">
+        <span>Estimated Distance</span>
+        <strong>{{ order.eta.distance_km }} km</strong>
+      </div>
+
+      <div class="eta-info-row">
+        <span>Travel Duration</span>
+        <strong>{{ order.eta.duration_minutes }} minutes</strong>
+      </div>
+
+      <div class="eta-info-row">
+        <span>Estimated Arrival</span>
+        <strong>
+          {{ formatDate(order.eta.estimated_arrival_at) }}
+        </strong>
+      </div>
+    </div>
+
+    <p class="eta-disclaimer">
+      {{ order.eta.message }}
+    </p>
+  </template>
+
+  <template v-else>
+    <h3>Estimated Arrival</h3>
+
+    <p class="eta-unavailable">
+      {{ order.eta?.message || 'ETA belum tersedia.' }}
+    </p>
+
+    <p class="eta-disclaimer">
+      Estimasi tersedia setelah kurir memulai perjalanan
+      dan koordinat pickup serta tujuan tersedia.
+    </p>
+  </template>
+</section>
 
       <section class="detail-card">
         <h3>Customer Information</h3>

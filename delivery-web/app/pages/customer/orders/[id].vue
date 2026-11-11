@@ -86,6 +86,17 @@ const canCancel = computed(() =>
   ['pending', 'assigned'].includes(order.value?.status || '')
 )
 
+  const actualDeliveredAt = computed(() => {
+  const histories = order.value?.status_histories || []
+
+  return histories
+    .filter(history => history.new_status === 'delivered')
+    .sort((a, b) =>
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime()
+    )[0]?.created_at || null
+})
+
 const fetchOrder = async () => {
   loading.value = true
   errorMessage.value = ''
@@ -305,48 +316,86 @@ onMounted(() => {
       </section>
 
       <section class="detail-card eta-card">
-        <span class="eyebrow">DELIVERY ESTIMATE</span>
-        <h3>Estimated arrival</h3>
 
-        <template v-if="order.eta?.available">
-          <div class="eta-highlight">
-            {{ order.eta.duration_minutes }} minutes
-          </div>
+  <template v-if="order.status === 'delivered'">
+    <span class="eyebrow">DELIVERY COMPLETED</span>
+    <h3>Actual Delivery Time</h3>
 
-          <div class="eta-info">
-            <div class="eta-info-row">
-              <span>Estimated distance</span>
-              <strong>{{ order.eta.distance_km }} km</strong>
-            </div>
+    <template v-if="actualDeliveredAt">
+      <div class="eta-highlight">
+        ✓ Delivered
+      </div>
 
-            <div class="eta-info-row">
-              <span>Travel duration</span>
-              <strong>{{ order.eta.duration_minutes }} minutes</strong>
-            </div>
+      <div class="eta-info">
+        <div class="eta-info-row">
+          <span>Completion Date</span>
+          <strong>{{ formatEtaDate(actualDeliveredAt) }}</strong>
+        </div>
 
-            <div class="eta-info-row">
-              <span>Estimated arrival</span>
-              <strong>
-                {{ formatEtaDate(order.eta.estimated_arrival_at!) }}
-              </strong>
-            </div>
-          </div>
+        <div class="eta-info-row">
+          <span>Delivery Status</span>
+          <strong>Successfully Delivered</strong>
+        </div>
+      </div>
 
-          <p class="eta-disclaimer">
-            {{ order.eta.message }}
-          </p>
-        </template>
+      <p class="eta-disclaimer">
+        This is the actual delivery completion time recorded by the courier.
+      </p>
+    </template>
 
-        <template v-else>
-          <p class="eta-unavailable">
-            {{ order.eta?.message || 'ETA belum tersedia.' }}
-          </p>
-          <p class="eta-disclaimer">
-            Estimasi akan tersedia setelah kurir memulai perjalanan
-            dan koordinat pickup serta tujuan tersedia.
-          </p>
-        </template>
-      </section>
+    <template v-else>
+      <p class="eta-unavailable">
+        Actual delivery time is not available.
+      </p>
+    </template>
+  </template>
+
+  <template v-else>
+    <span class="eyebrow">DELIVERY ESTIMATE</span>
+    <h3>Estimated arrival</h3>
+
+    <template v-if="order.eta?.available">
+      <div class="eta-highlight">
+        {{ order.eta.duration_minutes }} minutes
+      </div>
+
+      <div class="eta-info">
+        <div class="eta-info-row">
+          <span>Estimated distance</span>
+          <strong>{{ order.eta.distance_km }} km</strong>
+        </div>
+
+        <div class="eta-info-row">
+          <span>Travel duration</span>
+          <strong>{{ order.eta.duration_minutes }} minutes</strong>
+        </div>
+
+        <div class="eta-info-row">
+          <span>Estimated arrival</span>
+          <strong>
+            {{ formatEtaDate(order.eta.estimated_arrival_at!) }}
+          </strong>
+        </div>
+      </div>
+
+      <p class="eta-disclaimer">
+        {{ order.eta.message }}
+      </p>
+    </template>
+
+    <template v-else>
+      <p class="eta-unavailable">
+        {{ order.eta?.message || 'ETA belum tersedia.' }}
+      </p>
+
+      <p class="eta-disclaimer">
+        Estimasi akan tersedia setelah kurir memulai perjalanan
+        dan koordinat pickup serta tujuan tersedia.
+      </p>
+    </template>
+  </template>
+
+</section>
 
       <section class="detail-card">
         <h3>Pickup information</h3>
