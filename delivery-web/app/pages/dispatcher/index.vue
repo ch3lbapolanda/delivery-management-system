@@ -37,6 +37,28 @@ interface OrderResponse {
   }
 }
 
+
+interface CourierAvailabilityResponse {
+  message: string
+  data: {
+    summary: {
+      available: number
+      busy: number
+      offline: number
+      total: number
+    }
+    couriers: {
+      id: number
+      name: string
+      email: string
+      availability_status: 'available' | 'offline'
+      has_active_order: boolean
+      work_status: 'available' | 'busy' | 'offline'
+    }[]
+  }
+}
+
+
 const { user, logout } = useAuth()
 const api = useApi()
 
@@ -57,6 +79,10 @@ const loading = ref(false)
 const errorMessage = ref('')
 const selectedStatus = ref('all')
 const totalOrders = ref(0)
+const courierAvailability = ref<CourierAvailabilityResponse['data'] | null>(null)
+const availabilityLoading = ref(false)
+const availabilityError = ref('')
+
 
 const filters = [
   { label: 'All orders', value: 'all' },
@@ -97,6 +123,26 @@ const fetchOrders = async () => {
 }
 
 
+const fetchCourierAvailability = async () => {
+  availabilityLoading.value = true
+  availabilityError.value = ''
+
+  try {
+    const response = await api<CourierAvailabilityResponse>(
+      '/dispatcher/courier-availability'
+    )
+
+    courierAvailability.value = response.data
+  } catch (error: any) {
+    availabilityError.value =
+      error.data?.message || 'Unable to load courier availability.'
+  } finally {
+    availabilityLoading.value = false
+  }
+}
+
+
+
 const handleLogout = async () => {
   await logout()
   await navigateTo('/')
@@ -127,7 +173,10 @@ watch(
   }
 )
 
-onMounted(fetchOrders)
+onMounted(() => {
+  fetchOrders()
+  fetchCourierAvailability()
+})
 
 </script>
 
@@ -171,6 +220,70 @@ onMounted(fetchOrders)
         <small>Waiting for assignment</small>
       </article>
     </section>
+
+    
+<section class="courier-overview">
+  <div class="section-heading">
+    <h3>Courier availability</h3>
+    <span>WORKFORCE</span>
+  </div>
+
+  <div v-if="availabilityLoading" class="empty-state">
+    Loading courier availability...
+  </div>
+
+  <div v-else-if="availabilityError" class="empty-state">
+    <p>{{ availabilityError }}</p>
+    <button @click="fetchCourierAvailability">
+      Try again
+    </button>
+  </div>
+
+  <template v-else-if="courierAvailability">
+    <div class="courier-stats">
+      <article class="courier-stat available">
+        <span>AVAILABLE</span>
+        <h3>{{ courierAvailability.summary.available }}</h3>
+        <small>Ready for assignment</small>
+      </article>
+
+      <article class="courier-stat busy">
+        <span>BUSY</span>
+        <h3>{{ courierAvailability.summary.busy }}</h3>
+        <small>Handling active orders</small>
+      </article>
+
+      <article class="courier-stat offline">
+        <span>OFFLINE</span>
+        <h3>{{ courierAvailability.summary.offline }}</h3>
+        <small>Not accepting orders</small>
+      </article>
+    </div>
+
+    <div class="courier-overview-list">
+      <div
+        v-for="courier in courierAvailability.couriers"
+        :key="courier.id"
+        class="courier-overview-item"
+      >
+        <div>
+          <strong>{{ courier.name }}</strong>
+          <small>{{ courier.email }}</small>
+        </div>
+
+        <span :class="`courier-work-status status-${courier.work_status}`">
+          {{ courier.work_status }}
+        </span>
+      </div>
+    </div>
+
+    <p class="courier-total">
+      Total registered couriers:
+      <strong>{{ courierAvailability.summary.total }}</strong>
+    </p>
+  </template>
+</section>
+
 
     <section class="recent">
       <div class="section-heading">

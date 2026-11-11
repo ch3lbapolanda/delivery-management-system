@@ -5676,3 +5676,151 @@ button {
 .courier-availability-card .courier-availability-success {
   color: #15803d;
 }
+
+
+
+/* Dispatcher Courier Availability */
+
+.courier-overview {
+  margin: 28px 0;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  color: #0f172a;
+}
+
+.courier-overview .section-heading {
+  margin-bottom: 20px;
+}
+
+.courier-overview .section-heading h3 {
+  color: #0f172a;
+}
+
+.courier-overview .section-heading span {
+  color: #64748b;
+}
+
+.courier-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.courier-stat {
+  padding: 18px;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.courier-stat span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.courier-stat h3 {
+  margin: 10px 0 4px;
+  font-size: 30px;
+  color: #0f172a;
+}
+
+.courier-stat small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.courier-stat.available span {
+  color: #15803d;
+}
+
+.courier-stat.busy span {
+  color: #d97706;
+}
+
+.courier-stat.offline span {
+  color: #64748b;
+}
+
+.courier-overview-list {
+  margin-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.courier-overview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.courier-overview-item div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.courier-overview-item strong {
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.courier-overview-item small {
+  color: #64748b;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.courier-work-status {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.courier-work-status.status-available {
+  color: #15803d;
+}
+
+.courier-work-status.status-busy {
+  color: #d97706;
+}
+
+.courier-work-status.status-offline {
+  color: #64748b;
+}
+
+.courier-total {
+  margin-top: 16px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.courier-total strong {
+  color: #0f172a;
+}
+
+@media (max-width: 600px) {
+  .courier-overview {
+    padding: 16px;
+  }
+
+  .courier-stats {
+    gap: 8px;
+  }
+
+  .courier-stat {
+    padding: 12px 8px;
+  }
+
+  .courier-stat h3 {
+    font-size: 24px;
+  }
+
+  .courier-stat small {
+    font-size: 10px;
+  }
+}
