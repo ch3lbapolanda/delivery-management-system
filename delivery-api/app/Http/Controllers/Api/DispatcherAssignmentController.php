@@ -18,12 +18,20 @@ class DispatcherAssignmentController extends Controller
             ->whereHas('role', function ($query) {
                 $query->where('slug', 'courier');
             })
-            ->select('id', 'name', 'email')
+            ->where('availability_status', 'available')
+            ->whereDoesntHave('assignedOrders', function ($query) {
+                $query->whereIn('status', [
+                    'assigned',
+                    'picked_up',
+                    'in_transit',
+                ]);
+            })
+            ->select('id', 'name', 'email', 'availability_status')
             ->orderBy('name')
             ->get();
 
         return response()->json([
-            'message' => 'Courier list retrieved successfully.',
+            'message' => 'Available couriers retrieved successfully.',
             'data' => $couriers,
         ]);
     }
@@ -38,7 +46,11 @@ class DispatcherAssignmentController extends Controller
             ],
         ]);
 
-        $result = DB::transaction(function () use ($request, $id, $validated) {
+        $result = DB::transaction(function () use (
+            $request,
+            $id,
+            $validated
+        ) {
             $order = Order::whereKey($id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -50,13 +62,28 @@ class DispatcherAssignmentController extends Controller
                 ];
             }
 
-            $courier = User::with('role')
-                ->findOrFail($validated['courier_id']);
+            $courier = User::whereKey($validated['courier_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$courier) {
+                return [
+                    'error' => true,
+                    'message' => 'Selected courier does not exist.',
+                ];
+            }
 
             if (!$courier->role || $courier->role->slug !== 'courier') {
                 return [
                     'error' => true,
                     'message' => 'Selected user is not a courier.',
+                ];
+            }
+
+            if (!$courier->isCourierAvailable()) {
+                return [
+                    'error' => true,
+                    'message' => 'Selected courier is offline or already has an active order.',
                 ];
             }
 

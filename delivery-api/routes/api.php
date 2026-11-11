@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DispatcherAssignmentController;
 use App\Http\Controllers\Api\CourierOrderController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\Api\CourierDeliveryProofController;
+use App\Http\Controllers\Api\CourierAvailabilityController;
 
 // Public endpoints
 Route::post('/register', [AuthController::class, 'register']);
@@ -44,6 +45,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin,courier')
     ->prefix('courier')
     ->group(function () {
+      Route::middleware('role:courier')->group(function () {
+    Route::get('/availability', [
+        CourierAvailabilityController::class,
+        'show',
+    ]);
+
+    Route::patch('/availability', [
+        CourierAvailabilityController::class,
+        'update',
+    ]);
+});
         Route::get('/orders', [CourierOrderController::class, 'index']);
         Route::get('/orders/{id}', [CourierOrderController::class, 'show']);
       Route::patch('/orders/{id}/status', [

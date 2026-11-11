@@ -33,11 +33,38 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+  public function isCourierAvailable(): bool
+{
+    if ($this->availability_status !== 'available') {
+        return false;
+    }
+
+    return !$this->assignedOrders()
+        ->whereIn('status', [
+            'assigned',
+            'picked_up',
+            'in_transit',
+        ])
+        ->exists();
+}
+
+public function hasActiveOrder(): bool
+{
+    return $this->assignedOrders()
+        ->whereIn('status', [
+            'assigned',
+            'picked_up',
+            'in_transit',
+        ])
+        ->exists();
+}
+
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'availability_status' => 'string',
         ];
     }
 }
