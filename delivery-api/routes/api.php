@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
       Route::get('/orders', [DispatcherOrderController::class, 'index']);
       Route::get('/orders/{id}', [DispatcherOrderController::class, 'show']);
       Route::get('/couriers', [DispatcherAssignmentController::class, 'couriers']);
+      Route::get('/courier-availability', [DispatcherAssignmentController::class,'availabilityOverview',]);
       Route::post('/orders/{id}/assign', [DispatcherAssignmentController::class, 'assign']);
     });
 

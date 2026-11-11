@@ -36,6 +36,50 @@ class DispatcherAssignmentController extends Controller
         ]);
     }
 
+  
+public function availabilityOverview(): JsonResponse
+{
+    $couriers = User::query()
+        ->whereHas('role', function ($query) {
+            $query->where('slug', 'courier');
+        })
+        ->withExists([
+            'assignedOrders as has_active_order' => function ($query) {
+                $query->whereIn('status', [
+                    'assigned',
+                    'picked_up',
+                    'in_transit',
+                ]);
+            },
+        ])
+        ->select('id', 'name', 'email', 'availability_status')
+        ->orderBy('name')
+        ->get()
+        ->map(function ($courier) {
+            $courier->has_active_order = (bool) $courier->has_active_order;
+
+            $courier->work_status = $courier->has_active_order
+                ? 'busy'
+                : $courier->availability_status;
+
+            return $courier;
+        });
+
+    return response()->json([
+        'message' => 'Courier availability retrieved successfully.',
+        'data' => [
+            'summary' => [
+                'available' => $couriers->where('work_status', 'available')->count(),
+                'busy' => $couriers->where('work_status', 'busy')->count(),
+                'offline' => $couriers->where('work_status', 'offline')->count(),
+                'total' => $couriers->count(),
+            ],
+            'couriers' => $couriers,
+        ],
+    ]);
+}
+
+
     public function assign(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
