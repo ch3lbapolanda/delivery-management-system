@@ -37,6 +37,16 @@ interface DeliveryProof {
   notes: string | null
   created_at: string
 }
+  interface PricingDetails {
+  delivery_type: string
+  distance_km: number
+  base_price: number
+  price_per_km: number
+  distance_fee: number
+  additional_fee: number
+  minimum_price: number
+  total_price: number
+}
 
 interface Order {
   id: number
@@ -53,6 +63,7 @@ interface Order {
   scheduled_pickup_at: string | null
   notes: string | null
   price: string | number | null
+  pricing_details?: PricingDetails | null
   customer: Person | null
   courier: Person | null
   status_histories: StatusHistory[]
@@ -167,6 +178,18 @@ const assignCourier = async () => {
   }
 }
 
+const formatCurrency = (value: string | number | null) => {
+  if (value === null || value === undefined) {
+    return 'Belum ditentukan'
+  }
+
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0
+  }).format(Number(value))
+}
+  
 const formatDate = (date: string | null) => {
   if (!date) return 'Tidak dijadwalkan'
 
@@ -265,33 +288,73 @@ onMounted(fetchOrder)
 
       
       <!-- DELIVERY PRICE -->
-      <section class="detail-card dispatcher-price-card">
-        <span class="eyebrow">PAYMENT INFORMATION</span>
+<section class="detail-card dispatcher-price-card">
+  <span class="eyebrow">PAYMENT INFORMATION</span>
 
-        <h3>Delivery Price</h3>
+  <h3>Delivery Price</h3>
 
-        <div class="info-row">
-          <span>Service Type</span>
-          <strong>
-            {{ order.delivery_type === 'instant' ? 'Instant' : 'Scheduled' }}
-          </strong>
-        </div>
+  <div class="info-row">
+    <span>Service Type</span>
+    <strong>
+      {{
+        order.pricing_details?.delivery_type === 'instant'
+          ? 'Instant'
+          : order.pricing_details?.delivery_type === 'scheduled'
+            ? 'Scheduled'
+            : order.delivery_type === 'instant'
+              ? 'Instant'
+              : 'Scheduled'
+      }}
+    </strong>
+  </div>
 
-        <div class="dispatcher-price-total">
-          <span>Total Delivery Price</span>
+  <template v-if="order.pricing_details">
+    <div class="info-row">
+      <span>Delivery Distance</span>
+      <strong>{{ order.pricing_details.distance_km }} km</strong>
+    </div>
 
-          <strong>
-            {{ order.price !== null
-              ? `Rp ${Number(order.price).toLocaleString('id-ID')}`
-              : 'Belum ditentukan' }}
-          </strong>
-        </div>
+    <div class="info-row">
+      <span>Base Price</span>
+      <strong>{{ formatCurrency(order.pricing_details.base_price) }}</strong>
+    </div>
 
-        <p class="dispatcher-price-note">
-          Final delivery price calculated by Kurir Malam.
-        </p>
-      </section>
+    <div class="info-row">
+      <span>Price per KM</span>
+      <strong>{{ formatCurrency(order.pricing_details.price_per_km) }}</strong>
+    </div>
 
+    <div class="info-row">
+      <span>Distance Fee</span>
+      <strong>{{ formatCurrency(order.pricing_details.distance_fee) }}</strong>
+    </div>
+
+    <div class="info-row">
+      <span>Additional Fee</span>
+      <strong>{{ formatCurrency(order.pricing_details.additional_fee) }}</strong>
+    </div>
+
+    <div class="info-row">
+      <span>Minimum Price</span>
+      <strong>{{ formatCurrency(order.pricing_details.minimum_price) }}</strong>
+    </div>
+  </template>
+
+  <div class="dispatcher-price-total">
+    <span>Total Delivery Price</span>
+    <strong>
+      {{ formatCurrency(order.pricing_details?.total_price ?? order.price) }}
+    </strong>
+  </div>
+
+  <p class="dispatcher-price-note">
+    {{
+      order.pricing_details
+        ? 'Historical pricing snapshot recorded when this order was created.'
+        : 'Historical pricing details are unavailable for this order.'
+    }}
+  </p>
+</section>
 
       <section class="detail-card eta-card">
         <span class="eyebrow">DELIVERY ESTIMATE</span>
