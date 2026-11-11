@@ -5548,3 +5548,131 @@ button {
   font-size: 11px;
   line-height: 1.5;
 }
+
+
+/* COURIER AVAILABILITY */
+
+.courier-availability-card {
+  padding: 22px;
+  margin-bottom: 24px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 16px;
+}
+
+.courier-availability-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.courier-availability-top h2 {
+  margin: 6px 0 0;
+  font-size: 20px;
+}
+
+.courier-availability-card h3 {
+  margin: 22px 0 6px;
+  font-size: 24px;
+}
+
+.courier-availability-card > p {
+  color: var(--text-secondary, #6b7280);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.courier-availability-badge {
+  padding: 7px 12px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.availability-available {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.availability-busy {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.availability-offline {
+  color: #64748b;
+  background: #e2e8f0;
+}
+
+.courier-availability-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.courier-availability-actions button {
+  flex: 1;
+  min-height: 46px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.availability-online-button {
+  color: white;
+  background: #15803d;
+}
+
+.availability-offline-button {
+  color: white;
+  background: #475569;
+}
+
+.courier-availability-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.courier-availability-message,
+.courier-availability-error,
+.courier-availability-success {
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.courier-availability-error {
+  color: #dc2626;
+}
+
+.courier-availability-success {
+  color: #15803d;
+}
+
+/* FIX COURIER AVAILABILITY TEXT CONTRAST */
+
+.courier-availability-card {
+  color: #0f172a;
+}
+
+.courier-availability-card h2,
+.courier-availability-card h3 {
+  color: #0f172a !important;
+}
+
+.courier-availability-card > p {
+  color: #64748b !important;
+}
+
+.courier-availability-card .courier-availability-message {
+  color: #475569;
+}
+
+.courier-availability-card .courier-availability-error {
+  color: #dc2626;
+}
+
+.courier-availability-card .courier-availability-success {
+  color: #15803d;
+}

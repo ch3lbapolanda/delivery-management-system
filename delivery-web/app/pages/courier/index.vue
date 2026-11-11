@@ -31,6 +31,15 @@ interface OrdersResponse {
   }
 }
 
+interface AvailabilityResponse {
+  message: string
+  data: {
+    availability_status: 'available' | 'offline'
+    work_status: 'available' | 'offline' | 'busy'
+    has_active_order: boolean
+  }
+}
+
 const route = useRoute()
 const api = useApi()
 const { user, logout } = useAuth()
@@ -38,6 +47,11 @@ const { user, logout } = useAuth()
 const orders = ref<CourierOrder[]>([])
 const loading = ref(true)
 const error = ref('')
+const availability = ref<AvailabilityResponse['data'] | null>(null)
+const availabilityLoading = ref(true)
+const availabilityUpdating = ref(false)
+const availabilityError = ref('')
+const availabilityMessage = ref('')
 
 const currentPage = ref(1)
 const pageSize = 10
@@ -85,6 +99,54 @@ const fetchOrders = async () => {
       err?.data?.message || 'Gagal mengambil daftar pengiriman.'
   } finally {
     loading.value = false
+  }
+}
+
+const fetchAvailability = async () => {
+  availabilityLoading.value = true
+  availabilityError.value = ''
+
+  try {
+    const response = await api<AvailabilityResponse>(
+      '/courier/availability'
+    )
+
+    availability.value = response.data
+  } catch (err: any) {
+    availabilityError.value =
+      err?.data?.message || 'Gagal mengambil status availability.'
+  } finally {
+    availabilityLoading.value = false
+  }
+}
+
+const updateAvailability = async (
+  status: 'available' | 'offline'
+) => {
+  if (availabilityUpdating.value || !availability.value) return
+
+  availabilityUpdating.value = true
+  availabilityError.value = ''
+  availabilityMessage.value = ''
+
+  try {
+    const response = await api<AvailabilityResponse>(
+      '/courier/availability',
+      {
+        method: 'PATCH',
+        body: {
+          availability_status: status
+        }
+      }
+    )
+
+    availability.value = response.data
+    availabilityMessage.value = response.message
+  } catch (err: any) {
+    availabilityError.value =
+      err?.data?.message || 'Gagal memperbarui availability.'
+  } finally {
+    availabilityUpdating.value = false
   }
 }
 
@@ -186,7 +248,10 @@ const handleLogout = async () => {
   await navigateTo('/login')
 }
 
-onMounted(fetchOrders)
+onMounted(() => {
+  fetchOrders()
+  fetchAvailability()
+})
 </script>
 
 <template>
@@ -206,6 +271,95 @@ onMounted(fetchOrders)
         Logout
       </button>
     </header>
+
+    <!-- COURIER AVAILABILITY -->
+<section class="courier-availability-card">
+  <div class="courier-availability-top">
+    <div>
+      <span class="courier-eyebrow">
+        WORK AVAILABILITY
+      </span>
+      <h2>Courier Status</h2>
+    </div>
+
+    <span
+      v-if="!availabilityLoading && availability"
+      class="courier-availability-badge"
+      :class="`availability-${availability.work_status}`"
+    >
+      {{
+        availability.work_status === 'available'
+          ? 'AVAILABLE'
+          : availability.work_status === 'busy'
+            ? 'BUSY'
+            : 'OFFLINE'
+      }}
+    </span>
+  </div>
+
+  <div v-if="availabilityLoading" class="courier-availability-message">
+    Memuat status availability...
+  </div>
+
+  <template v-else-if="availability">
+    <h3>
+      {{
+        availability.work_status === 'available'
+          ? "You're Online"
+          : availability.work_status === 'busy'
+            ? "You're Busy"
+            : "You're Offline"
+      }}
+    </h3>
+
+    <p>
+      {{
+        availability.work_status === 'available'
+          ? 'Kamu siap menerima tugas pengiriman baru.'
+          : availability.work_status === 'busy'
+            ? 'Selesaikan pengiriman aktif sebelum menerima tugas berikutnya.'
+            : 'Kamu sedang tidak menerima tugas pengiriman.'
+      }}
+    </p>
+
+    <div
+      v-if="availability.work_status !== 'busy'"
+      class="courier-availability-actions"
+    >
+      <button
+        v-if="availability.availability_status === 'offline'"
+        class="availability-online-button"
+        :disabled="availabilityUpdating"
+        @click="updateAvailability('available')"
+      >
+        {{ availabilityUpdating ? 'Updating...' : 'Go Online' }}
+      </button>
+
+      <button
+        v-else
+        class="availability-offline-button"
+        :disabled="availabilityUpdating"
+        @click="updateAvailability('offline')"
+      >
+        {{ availabilityUpdating ? 'Updating...' : 'Go Offline' }}
+      </button>
+    </div>
+  </template>
+
+  <p
+    v-if="availabilityError"
+    class="courier-availability-error"
+  >
+    {{ availabilityError }}
+  </p>
+
+  <p
+    v-if="availabilityMessage"
+    class="courier-availability-success"
+  >
+    {{ availabilityMessage }}
+  </p>
+</section>
 
     <section class="courier-welcome">
       <span>DELIVERY OPERATIONS</span>
