@@ -67,4 +67,9 @@ public function hasActiveOrder(): bool
             'availability_status' => 'string',
         ];
     }
+
+  public function courierLocations(): HasMany
+{
+    return $this->hasMany(CourierLocation::class, 'courier_id');
+}
 }

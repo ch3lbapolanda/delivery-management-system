@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\CourierLocation;
+use Illuminate\Http\Request;
+
+class CourierLocationController extends Controller
+{
+    public function store(Request $request, string $id)
+    {
+        $validated = $request->validate([
+            'latitude' => [
+                'required',
+                'numeric',
+                'between:-90,90',
+            ],
+            'longitude' => [
+                'required',
+                'numeric',
+                'between:-180,180',
+            ],
+            'accuracy' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:100000',
+            ],
+            'heading' => [
+                'nullable',
+                'numeric',
+                'between:0,360',
+            ],
+            'speed' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:1000',
+            ],
+            'recorded_at' => [
+                'required',
+                'date',
+            ],
+        ]);
+
+        $courier = $request->user();
+
+        $order = Order::query()
+            ->where('id', $id)
+            ->where('courier_id', $courier->id)
+            ->where('status', 'in_transit')
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'message' => 'Order not found or not available for tracking.',
+            ], 404);
+        }
+
+        $location = CourierLocation::create([
+            'order_id' => $order->id,
+            'courier_id' => $courier->id,
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+            'accuracy' => $validated['accuracy'] ?? null,
+            'heading' => $validated['heading'] ?? null,
+            'speed' => $validated['speed'] ?? null,
+            'recorded_at' => $validated['recorded_at'],
+        ]);
+
+        return response()->json([
+            'message' => 'Courier location recorded successfully.',
+            'data' => $location,
+        ], 201);
+    }
+}
+

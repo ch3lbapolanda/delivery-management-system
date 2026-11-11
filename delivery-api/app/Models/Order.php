@@ -64,4 +64,8 @@ class Order extends Model
     {
         return $this->hasOne(DeliveryProof::class);
     }
+  public function courierLocations(): HasMany
+{
+    return $this->hasMany(CourierLocation::class);
+}
 }
