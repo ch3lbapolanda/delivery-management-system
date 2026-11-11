@@ -20,6 +20,16 @@ interface DeliveryProof {
   notes: string | null
   created_at: string
 }
+  interface PricingDetails {
+  delivery_type: string
+  distance_km: number
+  base_price: number
+  price_per_km: number
+  distance_fee: number
+  additional_fee: number
+  minimum_price: number
+  total_price: number
+}
 
 interface AdminOrder {
   id: number
@@ -35,6 +45,7 @@ interface AdminOrder {
   pickup_address: string
   delivery_address: string
   price: number | string | null
+  pricing_details?: PricingDetails | null
   notes: string | null
   created_at: string
   delivery_proof?: DeliveryProof | null
@@ -294,26 +305,72 @@ onMounted(fetchOrders)
             <h3>Order Details</h3>
             
             <div class="admin-price-card">
-              <span class="admin-eyebrow">PAYMENT INFORMATION</span>
+  <span class="admin-eyebrow">PAYMENT INFORMATION</span>
 
-              <h4>Delivery Price</h4>
+  <h4>Delivery Price</h4>
 
-              <div class="admin-price-row">
-                <span>Service Type</span>
-                <strong>
-                  {{ order.delivery_type === 'instant' ? 'Instant' : 'Scheduled' }}
-                </strong>
-              </div>
+  <div class="admin-price-row">
+    <span>Service Type</span>
+    <strong>
+      {{
+        order.pricing_details?.delivery_type === 'instant'
+          ? 'Instant'
+          : order.pricing_details?.delivery_type === 'scheduled'
+            ? 'Scheduled'
+            : order.delivery_type === 'instant'
+              ? 'Instant'
+              : 'Scheduled'
+      }}
+    </strong>
+  </div>
 
-              <div class="admin-price-total">
-                <span>Total Delivery Price</span>
-                <strong>{{ formatPrice(order.price) }}</strong>
-              </div>
+  <template v-if="order.pricing_details">
+    <div class="admin-price-row">
+      <span>Delivery Distance</span>
+      <strong>{{ order.pricing_details.distance_km }} km</strong>
+    </div>
 
-              <p class="admin-price-note">
-                Final delivery price calculated by Kurir Malam.
-              </p>
-            </div>
+    <div class="admin-price-row">
+      <span>Base Price</span>
+      <strong>{{ formatPrice(order.pricing_details.base_price) }}</strong>
+    </div>
+
+    <div class="admin-price-row">
+      <span>Price per KM</span>
+      <strong>{{ formatPrice(order.pricing_details.price_per_km) }}</strong>
+    </div>
+
+    <div class="admin-price-row">
+      <span>Distance Fee</span>
+      <strong>{{ formatPrice(order.pricing_details.distance_fee) }}</strong>
+    </div>
+
+    <div class="admin-price-row">
+      <span>Additional Fee</span>
+      <strong>{{ formatPrice(order.pricing_details.additional_fee) }}</strong>
+    </div>
+
+    <div class="admin-price-row">
+      <span>Minimum Price</span>
+      <strong>{{ formatPrice(order.pricing_details.minimum_price) }}</strong>
+    </div>
+  </template>
+
+  <div class="admin-price-total">
+    <span>Total Delivery Price</span>
+    <strong>
+      {{ formatPrice(order.pricing_details?.total_price ?? order.price) }}
+    </strong>
+  </div>
+
+  <p class="admin-price-note">
+    {{
+      order.pricing_details
+        ? 'Historical pricing snapshot recorded when this order was created.'
+        : 'Historical pricing details are unavailable for this order.'
+    }}
+  </p>
+</div>
 
 
             <h4>Customer</h4>

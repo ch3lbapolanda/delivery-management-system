@@ -38,6 +38,17 @@ interface DeliveryProof {
   created_at: string
 }
 
+  interface PricingDetails {
+  delivery_type: string
+  distance_km: number
+  base_price: number
+  price_per_km: number
+  distance_fee: number
+  additional_fee: number
+  minimum_price: number
+  total_price: number
+}
+
 interface Order {
   id: number
   order_number: string
@@ -52,6 +63,7 @@ interface Order {
   scheduled_pickup_at: string | null
   notes: string | null
   price: string | number | null
+  pricing_details?: PricingDetails | null
   eta?: OrderEta
   customer: Person | null
   status_histories: StatusHistory[]
@@ -472,31 +484,76 @@ onUnmounted(() => {
         </div>
       </section>
 
-      
       <!-- DELIVERY PRICE -->
-      <section class="courier-detail-card courier-price-card">
-        <span class="courier-detail-eyebrow">
-          PAYMENT INFORMATION
-        </span>
+<section class="courier-detail-card courier-price-card">
+  <span class="courier-detail-eyebrow">
+    PAYMENT INFORMATION
+  </span>
 
-        <h3>Delivery Price</h3>
+  <h3>Delivery Price</h3>
 
-        <div class="courier-info-row">
-          <span>Service Type</span>
-          <strong>
-            {{ order.delivery_type === 'instant' ? 'Instant' : 'Scheduled' }}
-          </strong>
-        </div>
+  <div class="courier-info-row">
+    <span>Service Type</span>
+    <strong>
+      {{
+        order.pricing_details?.delivery_type === 'instant'
+          ? 'Instant'
+          : order.pricing_details?.delivery_type === 'scheduled'
+            ? 'Scheduled'
+            : order.delivery_type === 'instant'
+              ? 'Instant'
+              : 'Scheduled'
+      }}
+    </strong>
+  </div>
 
-        <div class="courier-price-total">
-          <span>Total Delivery Price</span>
-          <strong>{{ formatCurrency(order.price) }}</strong>
-        </div>
+  <template v-if="order.pricing_details">
+    <div class="courier-info-row">
+      <span>Delivery Distance</span>
+      <strong>{{ order.pricing_details.distance_km }} km</strong>
+    </div>
 
-        <p class="courier-price-note">
-          Final delivery price calculated by Kurir Malam.
-        </p>
-      </section>
+    <div class="courier-info-row">
+      <span>Base Price</span>
+      <strong>{{ formatCurrency(order.pricing_details.base_price) }}</strong>
+    </div>
+
+    <div class="courier-info-row">
+      <span>Price per KM</span>
+      <strong>{{ formatCurrency(order.pricing_details.price_per_km) }}</strong>
+    </div>
+
+    <div class="courier-info-row">
+      <span>Distance Fee</span>
+      <strong>{{ formatCurrency(order.pricing_details.distance_fee) }}</strong>
+    </div>
+
+    <div class="courier-info-row">
+      <span>Additional Fee</span>
+      <strong>{{ formatCurrency(order.pricing_details.additional_fee) }}</strong>
+    </div>
+
+    <div class="courier-info-row">
+      <span>Minimum Price</span>
+      <strong>{{ formatCurrency(order.pricing_details.minimum_price) }}</strong>
+    </div>
+  </template>
+
+  <div class="courier-price-total">
+    <span>Total Delivery Price</span>
+    <strong>
+      {{ formatCurrency(order.pricing_details?.total_price ?? order.price) }}
+    </strong>
+  </div>
+
+  <p class="courier-price-note">
+    {{
+      order.pricing_details
+        ? 'Historical pricing snapshot recorded when this order was created.'
+        : 'Historical pricing details are unavailable for this order.'
+    }}
+  </p>
+</section>
 
 
       <!-- ETA -->
