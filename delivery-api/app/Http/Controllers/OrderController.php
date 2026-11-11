@@ -74,6 +74,7 @@ class OrderController extends Controller
                 'customer_id' => $request->user()->id,
                 'status' => 'pending',
                 'price' => $pricing['total_price'],
+                'pricing_details' => $pricing,
             ]);
 
             $order->statusHistories()->create([

@@ -29,6 +29,7 @@ class Order extends Model
         'notes',
         'price',
         'cancellation_reason',
+        'pricing_details',
     ];
 
     protected function casts(): array
@@ -40,6 +41,7 @@ class Order extends Model
             'delivery_latitude' => 'decimal:7',
             'delivery_longitude' => 'decimal:7',
             'price' => 'decimal:2',
+            'pricing_details' => 'array',
         ];
     }
 
