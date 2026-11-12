@@ -11,7 +11,9 @@ use App\Http\Controllers\Api\CourierOrderController;
 use App\Http\Controllers\Api\CourierDeliveryProofController;
 use App\Http\Controllers\Api\CourierAvailabilityController;
 use App\Http\Controllers\Api\CourierLocationController;
+use App\Http\Controllers\Api\OrderTrackingController;
 use App\Http\Controllers\AdminDashboardController;
+
 
 
 // ==========================================
@@ -47,6 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
 
+        Route::get('/orders/{id}/tracking', [OrderTrackingController::class, 'customerLocation',]);
+
         Route::post('/pricing/estimate', [
             PricingController::class,
             'estimate',
@@ -65,6 +69,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/orders', [
                 DispatcherOrderController::class,
                 'index',
+            ]);
+
+            Route::get('/orders/{id}/tracking', [
+              OrderTrackingController::class,
+              'dispatcherLocation',
             ]);
 
             Route::get('/orders/{id}', [
