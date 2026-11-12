@@ -5869,3 +5869,27 @@ button {
   line-height: 1.6;
   opacity: 0.6;
 }
+.tracking-card {
+  overflow: hidden;
+}
+
+.courier-tracking-map {
+  width: 100%;
+  height: 300px;
+  margin-top: 16px;
+  border-radius: 14px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.tracking-status {
+  margin-top: 14px;
+  color: #70d6a1;
+  font-size: 13px;
+}
+
+.tracking-time {
+  color: #9b9ba8;
+  font-size: 12px;
+  margin-top: 6px;
+}

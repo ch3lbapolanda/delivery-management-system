@@ -74,6 +74,52 @@ interface OrderResponse {
 const route = useRoute()
 const api = useApi()
 
+
+interface TrackingLocation {
+  latitude: number
+  longitude: number
+  accuracy: number | null
+  speed: number | null
+  heading: number | null
+  recorded_at: string
+}
+
+const trackingLocation = ref<TrackingLocation | null>(null)
+const trackingMessage = ref('Waiting for courier location...')
+let trackingTimer: ReturnType<typeof setInterval> | null = null
+
+const fetchTracking = async () => {
+  try {
+    const response = await api<{
+      data: TrackingLocation | null
+      message: string
+    }>(`/orders/${route.params.id}/tracking`)
+
+    trackingLocation.value = response.data
+    trackingMessage.value = response.message
+  } catch {
+    trackingMessage.value = 'Unable to retrieve courier location.'
+  }
+}
+
+const startTracking = () => {
+  stopTracking()
+  trackingLocation.value = null
+
+  if (order.value?.status !== 'in_transit') return
+
+  fetchTracking()
+  trackingTimer = setInterval(fetchTracking, 8000)
+}
+
+const stopTracking = () => {
+  if (trackingTimer !== null) {
+    clearInterval(trackingTimer)
+    trackingTimer = null
+  }
+}
+
+
 const order = ref<Order | null>(null)
 const loading = ref(true)
 const errorMessage = ref('')
@@ -118,6 +164,7 @@ const fetchOrder = async () => {
     if (!order.value || !order.value.id) {
       throw new Error('Invalid order response')
     }
+    startTracking()
   } catch (error: any) {
     order.value = null
     errorMessage.value =
@@ -190,6 +237,9 @@ const goBack = () => {
 
 onMounted(() => {
   fetchOrder()
+})
+  onBeforeUnmount(() => {
+  stopTracking()
 })
 </script>
 
@@ -403,6 +453,35 @@ onMounted(() => {
         <p>{{ order.sender_phone }}</p>
         <p>{{ order.pickup_address }}</p>
       </section>
+      <!-- LIVE COURIER TRACKING -->
+<section
+  v-if="order.status === 'in_transit'"
+  class="detail-card tracking-card"
+>
+  <span class="eyebrow">LIVE TRACKING</span>
+  <h3>Courier location</h3>
+
+  <template v-if="trackingLocation">
+    <ClientOnly>
+      <CourierTrackingMap
+        :latitude="trackingLocation.latitude"
+        :longitude="trackingLocation.longitude"
+      />
+    </ClientOnly>
+
+    <p class="tracking-status">
+      ● Courier location updated
+    </p>
+
+    <p class="tracking-time">
+      Last update: {{ formatDate(trackingLocation.recorded_at) }}
+    </p>
+  </template>
+
+  <p v-else class="eta-unavailable">
+    {{ trackingMessage }}
+  </p>
+</section>
 
       <section class="detail-card">
         <h3>Recipient information</h3>
