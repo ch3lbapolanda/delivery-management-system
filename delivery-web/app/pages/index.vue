@@ -17,6 +17,12 @@ const handleLogin = async () => {
       email.value,
       password.value
     )
+  console.log('LOGIN DEBUG:', {
+  responseKeys: Object.keys(response || {}),
+  hasUser: !!response?.user,
+  userKeys: Object.keys(response?.user || {}),
+  role: response?.user?.role?.slug
+})
 
     const roleRoutes: Record<string, string> = {
       admin: '/admin',

@@ -97,6 +97,106 @@ const proofNotes = ref('')
 
 const fileInput = ref<HTMLInputElement | null>(null)
 
+const gpsTracking = ref(false)
+const gpsStatus = ref('GPS belum aktif')
+
+let gpsWatchId: number | null = null
+let lastGpsSentAt = 0
+let gpsSending = false
+
+const stopGpsTracking = () => {
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId)
+    gpsWatchId = null
+  }
+
+  gpsTracking.value = false
+  gpsStatus.value = 'GPS tidak aktif'
+}
+
+const startGpsTracking = () => {
+  if (gpsWatchId !== null) return
+
+  if (!navigator.geolocation) {
+    gpsStatus.value = 'Browser tidak mendukung GPS'
+    return
+  }
+
+  gpsStatus.value = 'Meminta akses lokasi...'
+
+  gpsWatchId = navigator.geolocation.watchPosition(
+    async (position) => {
+      const now = Date.now()
+
+      if (position.coords.accuracy > 100) {
+        gpsStatus.value = 'Akurasi GPS rendah, menunggu sinyal...'
+        return
+      }
+
+      if (now - lastGpsSentAt < 8000 || gpsSending) {
+        return
+      }
+
+      if (!order.value || order.value.status !== 'in_transit') {
+        stopGpsTracking()
+        return
+      }
+
+      gpsSending = true
+      lastGpsSentAt = now
+
+      try {
+        await api(
+          `/courier/orders/${order.value.id}/location`,
+          {
+            method: 'POST',
+            body: {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              heading: position.coords.heading,
+              speed: position.coords.speed,
+              recorded_at: new Date().toISOString()
+            }
+          }
+        )
+
+        gpsTracking.value = true
+        gpsStatus.value = 'GPS aktif · Lokasi terkirim'
+      } catch {
+        gpsStatus.value = 'Gagal mengirim lokasi'
+      } finally {
+        gpsSending = false
+      }
+    },
+    (error) => {
+      gpsTracking.value = false
+
+      if (error.code === 1) {
+        gpsStatus.value = 'Izin lokasi ditolak'
+      } else if (error.code === 2) {
+        gpsStatus.value = 'Lokasi tidak tersedia'
+      } else {
+        gpsStatus.value = 'GPS mengalami timeout'
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 5000
+    }
+  )
+}
+
+const syncGpsTracking = () => {
+  if (order.value?.status === 'in_transit') {
+    startGpsTracking()
+  } else {
+    stopGpsTracking()
+  }
+}
+
+
 const fetchOrder = async () => {
   loading.value = true
   error.value = ''
@@ -110,6 +210,7 @@ const fetchOrder = async () => {
       ...response.data,
       eta: response.eta
     }
+    syncGpsTracking()
   } catch (err: any) {
     error.value =
       err?.data?.message || 'Gagal mengambil detail pengiriman.'
@@ -431,6 +532,8 @@ const actionButtonLabel = computed(() => {
 onMounted(fetchOrder)
 
 onUnmounted(() => {
+  stopGpsTracking()
+
   if (photoPreview.value) {
     URL.revokeObjectURL(photoPreview.value)
   }
@@ -642,20 +745,40 @@ onUnmounted(() => {
   </template>
 </section>
 
-      <!-- PICKUP -->
-      <section class="courier-detail-card">
-        <h3>Pickup Information</h3>
+      
 
-        <div class="courier-person">
-          <span>Sender</span>
-          <strong>{{ order.sender_name }}</strong>
-          <p>{{ order.sender_phone }}</p>
+      <!-- GPS TRACKING -->
+      <section
+        v-if="order.status === 'in_transit'"
+        class="courier-detail-card gps-tracking-card"
+      >
+        <span class="courier-detail-eyebrow">
+          LIVE LOCATION TRACKING
+        </span>
+
+        <div class="gps-tracking-content">
+          <div
+            class="gps-tracking-indicator"
+            :class="{ active: gpsTracking }"
+          >
+            <span></span>
+          </div>
+
+          <div>
+            <h3>
+              {{ gpsTracking ? 'GPS Tracking Active' : 'GPS Tracking' }}
+            </h3>
+
+            <p>{{ gpsStatus }}</p>
+          </div>
         </div>
 
-        <div class="courier-address">
-          {{ order.pickup_address }}
-        </div>
+        <p class="gps-tracking-note">
+          Lokasi kurir dikirim secara berkala selama pengiriman berlangsung.
+        </p>
       </section>
+
+      <!-- PICKUP -->
 
       <!-- DELIVERY -->
       <section class="courier-detail-card">
