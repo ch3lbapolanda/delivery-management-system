@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\CourierLocation;
+use App\Events\CourierLocationUpdated;
 use Illuminate\Http\Request;
 
 class CourierLocationController extends Controller
@@ -59,16 +60,36 @@ class CourierLocationController extends Controller
             ], 404);
         }
 
-        $location = CourierLocation::create([
-            'order_id' => $order->id,
-            'courier_id' => $courier->id,
-            'latitude' => $validated['latitude'],
-            'longitude' => $validated['longitude'],
-            'accuracy' => $validated['accuracy'] ?? null,
-            'heading' => $validated['heading'] ?? null,
-            'speed' => $validated['speed'] ?? null,
-            'recorded_at' => $validated['recorded_at'],
-        ]);
+        
+$location = CourierLocation::create([
+    'order_id' => $order->id,
+    'courier_id' => $courier->id,
+    'latitude' => $validated['latitude'],
+    'longitude' => $validated['longitude'],
+    'accuracy' => $validated['accuracy'] ?? null,
+    'heading' => $validated['heading'] ?? null,
+    'speed' => $validated['speed'] ?? null,
+    'recorded_at' => $validated['recorded_at'],
+]);
+
+CourierLocationUpdated::dispatch(
+    orderId: (int) $order->id,
+    latitude: (float) $location->latitude,
+    longitude: (float) $location->longitude,
+    accuracy: $location->accuracy !== null
+        ? (float) $location->accuracy
+        : null,
+    heading: $location->heading !== null
+        ? (float) $location->heading
+        : null,
+    speed: $location->speed !== null
+        ? (float) $location->speed
+        : null,
+    recordedAt: $location->recorded_at->toISOString(),
+);
+
+
+      
 
         return response()->json([
             'message' => 'Courier location recorded successfully.',
