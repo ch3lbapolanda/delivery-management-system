@@ -73,7 +73,24 @@ interface OrderResponse {
 
 const route = useRoute()
 const api = useApi()
-const echo = (useNuxtApp() as any).$echo
+
+const nuxtApp = useNuxtApp() as any
+const echo = nuxtApp.$echo
+const reverbStatus = nuxtApp.$reverbStatus
+const reverbStatusLabel = computed(() => {
+  switch (reverbStatus.value) {
+    case 'connected':
+      return 'LIVE CONNECTION'
+    case 'connecting':
+    case 'initialized':
+      return 'CONNECTING'
+    case 'unavailable':
+    case 'failed':
+      return 'CONNECTION ERROR'
+    default:
+      return 'RECONNECTING'
+  }
+})
 
 interface TrackingLocation {
   latitude: number
@@ -490,13 +507,22 @@ onMounted(() => {
         <p>{{ order.sender_phone }}</p>
         <p>{{ order.pickup_address }}</p>
       </section>
-      <!-- LIVE COURIER TRACKING -->
+
+<!-- LIVE COURIER TRACKING -->
 <section
   v-if="order.status === 'in_transit'"
   class="detail-card tracking-card"
 >
   <span class="eyebrow">LIVE TRACKING</span>
   <h3>Courier location</h3>
+
+  <div
+    class="tracking-connection"
+    :class="`connection-${reverbStatus}`"
+  >
+    <span class="connection-dot"></span>
+    {{ reverbStatusLabel }}
+  </div>
 
   <template v-if="trackingLocation">
     <ClientOnly>
@@ -519,6 +545,7 @@ onMounted(() => {
     {{ trackingMessage }}
   </p>
 </section>
+
 
       <section class="detail-card">
         <h3>Recipient information</h3>

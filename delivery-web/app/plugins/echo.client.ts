@@ -13,6 +13,10 @@ export default defineNuxtPlugin(() => {
 
   const config = useRuntimeConfig()
   const { token } = useAuth()
+  const reverbStatus = useState<string>(
+  'reverb-status',
+  () => 'connecting'
+)
 
   const echo = new Echo({
     broadcaster: 'reverb',
@@ -52,10 +56,23 @@ export default defineNuxtPlugin(() => {
       }
     })
   })
+  const connection = (echo.connector as any)?.pusher?.connection
+
+if (connection) {
+  reverbStatus.value = connection.state
+
+  connection.bind(
+    'state_change',
+    (states: { current: string }) => {
+      reverbStatus.value = states.current
+    }
+  )
+}
 
   return {
-    provide: {
-      echo
-    }
+  provide: {
+    echo,
+    reverbStatus: readonly(reverbStatus)
+  }
   }
 })
