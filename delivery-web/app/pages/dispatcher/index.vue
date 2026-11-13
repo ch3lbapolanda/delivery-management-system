@@ -325,6 +325,65 @@ onMounted(() => {
 </section>
 
 
+    <section class="fleet-section">
+  <div class="section-heading">
+    <h3>Live Fleet Monitoring</h3>
+    <span>REALTIME TRACKING</span>
+  </div>
+
+  <div class="fleet-toolbar">
+    <div>
+      <strong>{{ liveCouriers.length }}</strong>
+      <span> active courier locations</span>
+    </div>
+
+    <button
+      class="fleet-refresh"
+      :disabled="fleetLoading"
+      @click="fetchLiveCouriers"
+    >
+      {{ fleetLoading ? 'Refreshing...' : '↻ Refresh' }}
+    </button>
+  </div>
+
+  <div v-if="fleetLoading && liveCouriers.length === 0" class="empty-state">
+    Loading live courier locations...
+  </div>
+
+  <div v-else-if="fleetError" class="empty-state">
+    <p>{{ fleetError }}</p>
+    <button @click="fetchLiveCouriers">Try again</button>
+  </div>
+
+  <div v-else-if="liveCouriers.length === 0" class="empty-state">
+    <div class="empty-icon">⌖</div>
+    <h4>No active courier locations</h4>
+    <p>Courier locations will appear here when an order is in transit and GPS data is available.</p>
+  </div>
+
+  <template v-else>
+    <FleetMonitoringMap :couriers="liveCouriers" />
+
+    <div class="fleet-courier-list">
+      <article
+        v-for="courier in liveCouriers"
+        :key="courier.order_id"
+        class="fleet-courier-item"
+      >
+        <div>
+          <strong>{{ courier.courier_name }}</strong>
+          <small>{{ courier.order_number }}</small>
+        </div>
+
+        <div class="fleet-courier-location">
+          <span class="status-dot"></span>
+          <small>{{ formatDate(courier.recorded_at) }}</small>
+        </div>
+      </article>
+    </div>
+  </template>
+</section>
+
     <section class="recent">
       <div class="section-heading">
         <h3>Order management</h3>
