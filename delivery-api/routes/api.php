@@ -95,6 +95,13 @@ Route::middleware('auth:sanctum')->group(function () {
                 DispatcherAssignmentController::class,
                 'assign',
             ]);
+            Route::get('/live-couriers', [
+                OrderTrackingController::class, 
+                'liveCouriers'
+            ]);
+
+          Route::get('/orders/{id}/tracking', [OrderTrackingController::class, 'dispatcherLocation']);
+Route::get('/live-couriers', [OrderTrackingController::class, 'liveCouriers']);
         });
 
 

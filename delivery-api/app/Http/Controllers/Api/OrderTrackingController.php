@@ -60,4 +60,41 @@ class OrderTrackingController extends Controller
             ],
         ]);
     }
+  public function liveCouriers()
+{
+    $orders = Order::query()
+        ->with('courier:id,name')
+        ->where('status', 'in_transit')
+        ->whereNotNull('courier_id')
+        ->get();
+
+    $data = $orders->map(function ($order) {
+        $location = $order->courierLocations()
+            ->where('courier_id', $order->courier_id)
+            ->latest('recorded_at')
+            ->first();
+
+        if (!$location) {
+            return null;
+        }
+
+        return [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'courier_id' => $order->courier_id,
+            'courier_name' => $order->courier?->name,
+            'latitude' => $location->latitude,
+            'longitude' => $location->longitude,
+            'accuracy' => $location->accuracy,
+            'heading' => $location->heading,
+            'speed' => $location->speed,
+            'recorded_at' => $location->recorded_at,
+        ];
+    })->filter()->values();
+
+    return response()->json([
+        'message' => 'Live couriers retrieved successfully.',
+        'data' => $data,
+    ]);
+}
 }
