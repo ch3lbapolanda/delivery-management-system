@@ -5,14 +5,20 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
-    public: {
-      apiBase: '/api'
-    }
+  public: {
+    apiBase: '/api',
+    reverbKey: 'smoheiozbuwcsqhl1s6c',
+    reverbHost: 'localhost',
+    reverbPort: 8080
+  }
   },
 
   routeRules: {
-    '/api/**': {
-      proxy: 'http://127.0.0.1:8000/api/**'
-    }
+  '/api/**': {
+    proxy: 'http://127.0.0.1:8000/api/**'
+  },
+  '/api/broadcasting/**': {
+    proxy: 'http://127.0.0.1:8000/api/broadcasting/**'
+  }
   }
 })

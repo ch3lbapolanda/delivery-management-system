@@ -10,8 +10,10 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "laravel-echo": "^2.6.3",
     "leaflet": "^1.9.4",
     "nuxt": "^4.6.4",
+    "pusher-js": "^8.6.0",
     "vue": "^3.5.44",
     "vue-router": "^5.4.0"
   },
