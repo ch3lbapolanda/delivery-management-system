@@ -73,7 +73,7 @@ interface OrderResponse {
 
 const route = useRoute()
 const api = useApi()
-
+const echo = (useNuxtApp() as any).$echo
 
 interface TrackingLocation {
   latitude: number
@@ -87,6 +87,11 @@ interface TrackingLocation {
 const trackingLocation = ref<TrackingLocation | null>(null)
 const trackingMessage = ref('Waiting for courier location...')
 let trackingTimer: ReturnType<typeof setInterval> | null = null
+let trackingChannelName: string | null = null
+
+interface CourierLocationEvent extends TrackingLocation {
+  order_id: number
+}
 
 const fetchTracking = async () => {
   try {
@@ -108,14 +113,46 @@ const startTracking = () => {
 
   if (order.value?.status !== 'in_transit') return
 
+  // Ambil lokasi awal
   fetchTracking()
-  trackingTimer = setInterval(fetchTracking, 8000)
+
+  // Fallback polling setiap 8 detik
+  trackingTimer = setInterval(fetchTracking, 30000)
+
+  // Subscribe ke private channel Reverb
+  if (echo) {
+    trackingChannelName = `orders.${order.value.id}`
+
+    echo.private(trackingChannelName)
+      .listen(
+        '.courier.location.updated',
+        (event: CourierLocationEvent) => {
+          if (event.order_id !== order.value?.id) return
+
+          trackingLocation.value = {
+            latitude: event.latitude,
+            longitude: event.longitude,
+            accuracy: event.accuracy,
+            speed: event.speed,
+            heading: event.heading,
+            recorded_at: event.recorded_at
+          }
+
+          trackingMessage.value = 'Courier location updated.'
+        }
+      )
+  }
 }
 
 const stopTracking = () => {
   if (trackingTimer !== null) {
     clearInterval(trackingTimer)
     trackingTimer = null
+  }
+
+  if (trackingChannelName && echo) {
+    echo.leave(trackingChannelName)
+    trackingChannelName = null
   }
 }
 
