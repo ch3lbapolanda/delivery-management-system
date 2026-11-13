@@ -58,6 +58,24 @@ interface CourierAvailabilityResponse {
   }
 }
 
+interface FleetCourier {
+  order_id: number
+  order_number: string
+  courier_id: number
+  courier_name: string
+  latitude: number | string
+  longitude: number | string
+  accuracy: number | string | null
+  heading: number | string | null
+  speed: number | string | null
+  recorded_at: string
+}
+
+interface LiveCouriersResponse {
+  message: string
+  data: FleetCourier[]
+}
+
 
 const { user, logout } = useAuth()
 const api = useApi()
@@ -82,6 +100,9 @@ const totalOrders = ref(0)
 const courierAvailability = ref<CourierAvailabilityResponse['data'] | null>(null)
 const availabilityLoading = ref(false)
 const availabilityError = ref('')
+const liveCouriers = ref<FleetCourier[]>([])
+const fleetLoading = ref(false)
+const fleetError = ref('')
 
 
 const filters = [
@@ -141,6 +162,24 @@ const fetchCourierAvailability = async () => {
   }
 }
 
+const fetchLiveCouriers = async () => {
+  fleetLoading.value = true
+  fleetError.value = ''
+
+  try {
+    const response = await api<LiveCouriersResponse>(
+      '/dispatcher/live-couriers'
+    )
+
+    liveCouriers.value = response.data
+  } catch (error: any) {
+    fleetError.value =
+      error.data?.message || 'Unable to load live courier locations.'
+  } finally {
+    fleetLoading.value = false
+  }
+}
+
 
 
 const handleLogout = async () => {
@@ -176,6 +215,7 @@ watch(
 onMounted(() => {
   fetchOrders()
   fetchCourierAvailability()
+  fetchLiveCouriers()
 })
 
 </script>
