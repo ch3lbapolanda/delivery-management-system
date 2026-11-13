@@ -90,6 +90,43 @@ interface CourierResponse {
 const route = useRoute()
 const api = useApi()
 
+const nuxtApp = useNuxtApp() as any
+const echo = nuxtApp.$echo
+const reverbStatus = nuxtApp.$reverbStatus
+
+interface TrackingLocation {
+  latitude: number
+  longitude: number
+  accuracy: number | null
+  speed: number | null
+  heading: number | null
+  recorded_at: string
+}
+
+interface CourierLocationEvent extends TrackingLocation {
+  order_id: number
+}
+
+const trackingLocation = ref<TrackingLocation | null>(null)
+const trackingMessage = ref('Menunggu lokasi kurir...')
+let trackingTimer: ReturnType<typeof setInterval> | null = null
+let trackingChannelName: string | null = null
+
+const reverbStatusLabel = computed(() => {
+  switch (reverbStatus.value) {
+    case 'connected':
+      return 'LIVE CONNECTION'
+    case 'connecting':
+    case 'initialized':
+      return 'CONNECTING'
+    case 'unavailable':
+    case 'failed':
+      return 'CONNECTION ERROR'
+    default:
+      return 'RECONNECTING'
+  }
+})
+
 const order = ref<Order | null>(null)
 const loading = ref(true)
 const error = ref('')
@@ -115,11 +152,73 @@ const fetchOrder = async () => {
       ...response.data,
       eta: response.eta
     }
+    startTracking()
   } catch (err: any) {
     error.value =
       err?.data?.message || 'Gagal mengambil detail pesanan.'
   } finally {
     loading.value = false
+  }
+}
+
+const fetchTracking = async () => {
+  try {
+    const response = await api<{
+      data: TrackingLocation | null
+      message: string
+    }>(`/dispatcher/orders/${route.params.id}/tracking`)
+
+    trackingLocation.value = response.data
+    trackingMessage.value = response.message
+  } catch {
+    trackingMessage.value = 'Gagal mengambil lokasi kurir.'
+  }
+}
+
+const startTracking = () => {
+  stopTracking()
+  trackingLocation.value = null
+
+  if (order.value?.status !== 'in_transit') return
+
+  fetchTracking()
+
+  // Fallback polling setiap 30 detik
+  trackingTimer = setInterval(fetchTracking, 30000)
+
+  if (echo) {
+    trackingChannelName = `orders.${order.value.id}`
+
+    echo.private(trackingChannelName)
+      .listen(
+        '.courier.location.updated',
+        (event: CourierLocationEvent) => {
+          if (event.order_id !== order.value?.id) return
+
+          trackingLocation.value = {
+            latitude: event.latitude,
+            longitude: event.longitude,
+            accuracy: event.accuracy,
+            speed: event.speed,
+            heading: event.heading,
+            recorded_at: event.recorded_at
+          }
+
+          trackingMessage.value = 'Lokasi kurir diperbarui.'
+        }
+      )
+  }
+}
+
+const stopTracking = () => {
+  if (trackingTimer !== null) {
+    clearInterval(trackingTimer)
+    trackingTimer = null
+  }
+
+  if (trackingChannelName && echo) {
+    echo.leave(trackingChannelName)
+    trackingChannelName = null
   }
 }
 
@@ -241,7 +340,13 @@ const actualDeliveredAt = computed(() => {
     )[0]?.created_at || null
 })
 
-onMounted(fetchOrder)
+onMounted(() => {
+  fetchOrder()
+})
+
+onBeforeUnmount(() => {
+  stopTracking()
+})
 </script>
 
 <template>
@@ -544,6 +649,45 @@ onMounted(fetchOrder)
           </div>
         </div>
       </section>
+
+      <!-- DISPATCHER LIVE TRACKING -->
+<section
+  v-if="order.status === 'in_transit'"
+  class="detail-card tracking-card"
+>
+  <span class="eyebrow">LIVE TRACKING</span>
+  <h3>Courier Location</h3>
+
+  <div
+    class="tracking-connection"
+    :class="`connection-${reverbStatus}`"
+  >
+    <span class="connection-dot"></span>
+    {{ reverbStatusLabel }}
+  </div>
+
+  <template v-if="trackingLocation">
+    <ClientOnly>
+      <CourierTrackingMap
+        :latitude="trackingLocation.latitude"
+        :longitude="trackingLocation.longitude"
+      />
+    </ClientOnly>
+
+    <p class="tracking-status">
+      ● Courier location updated
+    </p>
+
+    <p class="tracking-time">
+      Last update:
+      {{ formatDate(trackingLocation.recorded_at) }}
+    </p>
+  </template>
+
+  <p v-else class="eta-unavailable">
+    {{ trackingMessage }}
+  </p>
+</section>
 
       <section class="detail-card">
         <h3>Delivery Schedule</h3>
