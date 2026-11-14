@@ -270,10 +270,18 @@ const syncFleetSubscriptions = () => {
         (event: FleetLocationEvent) => {
           if (event.order_id !== orderId) return
 
-          liveCouriers.value = liveCouriers.value.map(item => {
-            if (item.order_id !== orderId) return item
+liveCouriers.value = liveCouriers.value.map(item => {
+    if (item.order_id !== orderId) return item
 
-            return {
+    // Ignore outdated GPS events.
+    if (
+        Date.parse(event.recorded_at) <=
+        Date.parse(item.recorded_at)
+    ) {
+        return item
+    }
+
+    return {
               ...item,
               latitude: event.latitude,
               longitude: event.longitude,
@@ -538,7 +546,7 @@ onMounted(() => {
 
         <div class="fleet-courier-location">
           <span class="status-dot"></span>
-          <small>{{ formatDate(courier.recorded_at) }}</small>
+          <small>{{ getGpsAge(courier.recorded_at) }}</small>
         </div>
       </article>
     </div>

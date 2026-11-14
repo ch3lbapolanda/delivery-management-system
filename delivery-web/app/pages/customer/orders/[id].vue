@@ -146,6 +146,14 @@ const startTracking = () => {
         (event: CourierLocationEvent) => {
           if (event.order_id !== order.value?.id) return
 
+          if (
+    trackingLocation.value &&
+    Date.parse(event.recorded_at) <=
+    Date.parse(trackingLocation.value.recorded_at)
+) {
+    return
+}
+
           trackingLocation.value = {
             latitude: event.latitude,
             longitude: event.longitude,
