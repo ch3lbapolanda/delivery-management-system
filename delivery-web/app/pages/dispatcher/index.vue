@@ -76,6 +76,49 @@ interface LiveCouriersResponse {
   data: FleetCourier[]
 }
 
+type GpsHealth = 'live' | 'stale' | 'offline'
+
+const getGpsHealth = (recordedAt: string): GpsHealth => {
+  const age = Math.max(
+    0,
+    (Date.now() - new Date(recordedAt).getTime()) / 1000
+  )
+
+  if (age <= 30) return 'live'
+  if (age <= 90) return 'stale'
+
+  return 'offline'
+}
+
+const getGpsAge = (recordedAt: string) => {
+  const seconds = Math.floor(
+    Math.max(0, Date.now() - new Date(recordedAt).getTime()) / 1000
+  )
+
+  if (seconds < 60) return `${seconds}s ago`
+
+  return `${Math.floor(seconds / 60)}m ago`
+}
+
+const fleetHealthSummary = computed(() => {
+  // Trigger recalculation every time the clock changes
+  gpsHealthTick.value
+
+  return {
+    live: liveCouriers.value.filter(
+      courier => getGpsHealth(courier.recorded_at) === 'live'
+    ).length,
+
+    stale: liveCouriers.value.filter(
+      courier => getGpsHealth(courier.recorded_at) === 'stale'
+    ).length,
+
+    offline: liveCouriers.value.filter(
+      courier => getGpsHealth(courier.recorded_at) === 'offline'
+    ).length
+  }
+})
+
 
 const { user, logout } = useAuth()
 const api = useApi()
@@ -117,6 +160,9 @@ interface FleetLocationEvent {
 
 const fleetChannels = new Map<number, string>()
 let fleetPollingTimer: ReturnType<typeof setInterval> | null = null
+let gpsHealthTimer: ReturnType<typeof setInterval> | null = null
+
+const gpsHealthTick = ref(Date.now())
 
 
 const filters = [
@@ -282,6 +328,9 @@ onMounted(() => {
   fleetPollingTimer = setInterval(() => {
     fetchLiveCouriers()
   }, 30000)
+  gpsHealthTimer = setInterval(() => {
+  gpsHealthTick.value = Date.now()
+}, 5000)
 })
 
   onBeforeUnmount(() => {
@@ -295,6 +344,10 @@ onMounted(() => {
       echo.leave(channelName)
     }
   }
+  if (gpsHealthTimer !== null) {
+  clearInterval(gpsHealthTimer)
+  gpsHealthTimer = null
+}
 
   fleetChannels.clear()
 })
@@ -412,6 +465,26 @@ onMounted(() => {
     <span>REALTIME TRACKING</span>
   </div>
 
+  <div class="fleet-health-summary">
+  <div class="health-item">
+    <span class="health-indicator live"></span>
+    <strong>{{ fleetHealthSummary.live }}</strong>
+    <small>LIVE</small>
+  </div>
+
+  <div class="health-item">
+    <span class="health-indicator stale"></span>
+    <strong>{{ fleetHealthSummary.stale }}</strong>
+    <small>STALE</small>
+  </div>
+
+  <div class="health-item">
+    <span class="health-indicator offline"></span>
+    <strong>{{ fleetHealthSummary.offline }}</strong>
+    <small>OFFLINE</small>
+  </div>
+</div>
+
   <div class="fleet-toolbar">
     <div>
       <strong>{{ liveCouriers.length }}</strong>
@@ -452,9 +525,16 @@ onMounted(() => {
         class="fleet-courier-item"
       >
         <div>
-          <strong>{{ courier.courier_name }}</strong>
-          <small>{{ courier.order_number }}</small>
-        </div>
+  <strong>{{ courier.courier_name }}</strong>
+  <small>{{ courier.order_number }}</small>
+
+  <span
+    class="gps-health-badge"
+    :class="`gps-${getGpsHealth(courier.recorded_at)}`"
+  >
+    {{ getGpsHealth(courier.recorded_at).toUpperCase() }}
+  </span>
+</div>
 
         <div class="fleet-courier-location">
           <span class="status-dot"></span>
