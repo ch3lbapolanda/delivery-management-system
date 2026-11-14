@@ -79,8 +79,10 @@ interface LiveCouriersResponse {
 
 const { user, logout } = useAuth()
 const api = useApi()
-
 const route = useRoute()
+
+const nuxtApp = useNuxtApp() as any
+const echo = nuxtApp.$echo
 
 const currentView = computed(() => {
   const view = route.query.view
@@ -103,6 +105,18 @@ const availabilityError = ref('')
 const liveCouriers = ref<FleetCourier[]>([])
 const fleetLoading = ref(false)
 const fleetError = ref('')
+interface FleetLocationEvent {
+  order_id: number
+  latitude: number
+  longitude: number
+  accuracy: number | null
+  heading: number | null
+  speed: number | null
+  recorded_at: string
+}
+
+const fleetChannels = new Map<number, string>()
+let fleetPollingTimer: ReturnType<typeof setInterval> | null = null
 
 
 const filters = [
@@ -172,6 +186,7 @@ const fetchLiveCouriers = async () => {
     )
 
     liveCouriers.value = response.data
+      syncFleetSubscriptions()
   } catch (error: any) {
     fleetError.value =
       error.data?.message || 'Unable to load live courier locations.'
@@ -180,7 +195,54 @@ const fetchLiveCouriers = async () => {
   }
 }
 
+const syncFleetSubscriptions = () => {
+  if (!echo) return
 
+  const activeOrderIds = new Set(
+    liveCouriers.value.map(courier => courier.order_id)
+  )
+
+  // Unsubscribe orders that are no longer active
+  for (const [orderId, channelName] of fleetChannels) {
+    if (!activeOrderIds.has(orderId)) {
+      echo.leave(channelName)
+      fleetChannels.delete(orderId)
+    }
+  }
+
+  // Subscribe to every active order
+  for (const courier of liveCouriers.value) {
+    const orderId = courier.order_id
+
+    if (fleetChannels.has(orderId)) continue
+
+    const channelName = `orders.${orderId}`
+
+    echo.private(channelName)
+      .listen(
+        '.courier.location.updated',
+        (event: FleetLocationEvent) => {
+          if (event.order_id !== orderId) return
+
+          liveCouriers.value = liveCouriers.value.map(item => {
+            if (item.order_id !== orderId) return item
+
+            return {
+              ...item,
+              latitude: event.latitude,
+              longitude: event.longitude,
+              accuracy: event.accuracy,
+              heading: event.heading,
+              speed: event.speed,
+              recorded_at: event.recorded_at
+            }
+          })
+        }
+      )
+
+    fleetChannels.set(orderId, channelName)
+  }
+}
 
 const handleLogout = async () => {
   await logout()
@@ -216,6 +278,25 @@ onMounted(() => {
   fetchOrders()
   fetchCourierAvailability()
   fetchLiveCouriers()
+
+  fleetPollingTimer = setInterval(() => {
+    fetchLiveCouriers()
+  }, 30000)
+})
+
+  onBeforeUnmount(() => {
+  if (fleetPollingTimer !== null) {
+    clearInterval(fleetPollingTimer)
+    fleetPollingTimer = null
+  }
+
+  if (echo) {
+    for (const channelName of fleetChannels.values()) {
+      echo.leave(channelName)
+    }
+  }
+
+  fleetChannels.clear()
 })
 
 </script>
@@ -382,7 +463,7 @@ onMounted(() => {
       </article>
     </div>
   </template>
-</section>
+</section>  
 
     <section class="recent">
       <div class="section-heading">

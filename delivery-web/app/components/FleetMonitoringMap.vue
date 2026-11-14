@@ -26,6 +26,8 @@ let map: any = null
 let leaflet: any = null
 
 const markers = new Map<number, any>()
+let hasFittedBounds = false
+
 
 const updateMarkers = () => {
   if (!map || !leaflet) return
@@ -82,14 +84,16 @@ const updateMarkers = () => {
     marker.bindPopup(popup)
   }
 
-  if (bounds.length === 1) {
-    map.setView(bounds[0], 16)
-  } else if (bounds.length > 1) {
-    map.fitBounds(
-      leaflet.latLngBounds(bounds),
-      { padding: [40, 40], maxZoom: 16 }
-    )
-  }
+  if (!hasFittedBounds && bounds.length === 1) {
+  map.setView(bounds[0], 16)
+  hasFittedBounds = true
+} else if (!hasFittedBounds && bounds.length > 1) {
+  map.fitBounds(
+    leaflet.latLngBounds(bounds),
+    { padding: [40, 40], maxZoom: 16 }
+  )
+  hasFittedBounds = true
+}
 }
 
 watch(
