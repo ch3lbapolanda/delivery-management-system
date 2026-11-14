@@ -36,7 +36,8 @@ class OrderTrackingController extends Controller
 
         $location = $order->courierLocations()
             ->where('courier_id', $order->courier_id)
-            ->latest('recorded_at')
+            ->orderByDesc('recorded_at')
+            ->orderByDesc('id')
             ->first();
 
         if (!$location) {
@@ -71,7 +72,8 @@ class OrderTrackingController extends Controller
     $data = $orders->map(function ($order) {
         $location = $order->courierLocations()
             ->where('courier_id', $order->courier_id)
-            ->latest('recorded_at')
+            ->orderByDesc('recorded_at')
+            ->orderByDesc('id')
             ->first();
 
         if (!$location) {
