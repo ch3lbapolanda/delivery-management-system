@@ -322,6 +322,38 @@ class CourierLocationTest extends TestCase
 
         Event::assertNotDispatched(CourierLocationUpdated::class);
     }
+public function test_location_endpoint_rejects_future_timestamp(): void
+{
+    $customer = $this->createUser('customer');
+    $courier = $this->createUser('courier');
+
+    $order = $this->createInTransitOrder(
+        $customer,
+        $courier
+    );
+
+    $payload = $this->locationPayload();
+
+    $payload['recorded_at'] = now()
+        ->addMinutes(3)
+        ->toISOString();
+
+    $response = $this->actingAs($courier)
+        ->postJson(
+            "/api/courier/orders/{$order->id}/location",
+            $payload
+        );
+
+    $response->assertUnprocessable()
+        ->assertJson([
+            'message' => 'GPS timestamp cannot be more than 2 minutes in the future.',
+        ]);
+
+    $this->assertDatabaseCount('courier_locations', 0);
+
+    Event::assertNotDispatched(CourierLocationUpdated::class);
+}
+
 
 }
 

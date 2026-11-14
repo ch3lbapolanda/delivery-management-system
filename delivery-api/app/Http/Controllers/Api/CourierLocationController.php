@@ -46,6 +46,16 @@ class CourierLocationController extends Controller
             ],
         ]);
 
+                // Tolak timestamp yang lebih dari 2 menit di masa depan.
+        if (
+            \Carbon\Carbon::parse($validated['recorded_at'])
+                ->gt(now()->addMinutes(2))
+        ) {
+            return response()->json([
+                'message' => 'GPS timestamp cannot be more than 2 minutes in the future.',
+            ], 422);
+        }
+
         $courier = $request->user();
 
         $order = Order::query()

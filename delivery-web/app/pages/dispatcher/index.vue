@@ -79,9 +79,19 @@ interface LiveCouriersResponse {
 type GpsHealth = 'live' | 'stale' | 'offline'
 
 const getGpsHealth = (recordedAt: string): GpsHealth => {
+  const timestamp = new Date(recordedAt).getTime()
+
+  // Timestamp tidak valid atau terlalu jauh di masa depan.
+  if (
+    !Number.isFinite(timestamp) ||
+    timestamp > Date.now() + 120_000
+  ) {
+    return 'offline'
+  }
+
   const age = Math.max(
     0,
-    (Date.now() - new Date(recordedAt).getTime()) / 1000
+    (Date.now() - timestamp) / 1000
   )
 
   if (age <= 30) return 'live'
@@ -91,8 +101,17 @@ const getGpsHealth = (recordedAt: string): GpsHealth => {
 }
 
 const getGpsAge = (recordedAt: string) => {
+  const timestamp = new Date(recordedAt).getTime()
+
+  if (
+    !Number.isFinite(timestamp) ||
+    timestamp > Date.now() + 120_000
+  ) {
+    return 'Invalid timestamp'
+  }
+
   const seconds = Math.floor(
-    Math.max(0, Date.now() - new Date(recordedAt).getTime()) / 1000
+    Math.max(0, Date.now() - timestamp) / 1000
   )
 
   if (seconds < 60) return `${seconds}s ago`
