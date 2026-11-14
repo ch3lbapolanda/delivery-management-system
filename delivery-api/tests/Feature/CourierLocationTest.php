@@ -7,10 +7,20 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Events\CourierLocationUpdated;
+use Illuminate\Support\Facades\Event;
 
 class CourierLocationTest extends TestCase
 {
     use RefreshDatabase;
+    protected function setUp(): void
+{
+    parent::setUp();
+
+    Event::fake([
+        CourierLocationUpdated::class,
+    ]);
+}
 
     private function createUser(string $role): User
 {
@@ -205,5 +215,113 @@ class CourierLocationTest extends TestCase
 
         $this->assertDatabaseCount('courier_locations', 0);
     }
+  public function test_courier_cannot_spoof_courier_id_in_location_payload(): void
+  {
+    $customer = $this->createUser('customer');
+    $courierOne = $this->createUser('courier');
+    $courierTwo = $this->createUser('courier');
+
+    $order = $this->createInTransitOrder(
+        $customer,
+        $courierOne
+    );
+
+    $payload = $this->locationPayload();
+    $payload['courier_id'] = $courierTwo->id;
+
+    $response = $this->actingAs($courierOne)
+        ->postJson(
+            "/api/courier/orders/{$order->id}/location",
+            $payload
+        );
+
+    $response->assertCreated();
+
+    $this->assertDatabaseHas('courier_locations', [
+        'order_id' => $order->id,
+        'courier_id' => $courierOne->id,
+    ]);
+
+    $this->assertDatabaseMissing('courier_locations', [
+        'order_id' => $order->id,
+        'courier_id' => $courierTwo->id,
+    ]);
+  }
+
+  
+    public function test_latest_location_is_broadcast(): void
+    {
+        $customer = $this->createUser('customer');
+        $courier = $this->createUser('courier');
+
+        $order = $this->createInTransitOrder($customer, $courier);
+
+        $payload = $this->locationPayload();
+        $payload['recorded_at'] = now()->subMinute()->toISOString();
+
+        $this->actingAs($courier)->postJson(
+            "/api/courier/orders/{$order->id}/location",
+            $payload
+        )->assertCreated();
+
+        Event::assertDispatched(CourierLocationUpdated::class);
+    }
+
+    public function test_older_location_is_saved_but_not_broadcast(): void
+    {
+        $customer = $this->createUser('customer');
+        $courier = $this->createUser('courier');
+
+        $order = $this->createInTransitOrder($customer, $courier);
+
+        $newerPayload = $this->locationPayload();
+        $newerPayload['recorded_at'] = now()->subMinute()->toISOString();
+
+        $this->actingAs($courier)->postJson(
+            "/api/courier/orders/{$order->id}/location",
+            $newerPayload
+        )->assertCreated();
+
+        Event::fake([CourierLocationUpdated::class]);
+
+        $olderPayload = $this->locationPayload();
+        $olderPayload['recorded_at'] = now()->subMinutes(2)->toISOString();
+
+        $this->actingAs($courier)->postJson(
+            "/api/courier/orders/{$order->id}/location",
+            $olderPayload
+        )->assertCreated();
+
+        $this->assertDatabaseCount('courier_locations', 2);
+        Event::assertNotDispatched(CourierLocationUpdated::class);
+    }
+
+    public function test_location_with_same_timestamp_is_not_broadcast(): void
+    {
+        $customer = $this->createUser('customer');
+        $courier = $this->createUser('courier');
+
+        $order = $this->createInTransitOrder($customer, $courier);
+
+        $timestamp = now()->subMinute()->toISOString();
+
+        $payload = $this->locationPayload();
+        $payload['recorded_at'] = $timestamp;
+
+        $this->actingAs($courier)->postJson(
+            "/api/courier/orders/{$order->id}/location",
+            $payload
+        )->assertCreated();
+
+        Event::fake([CourierLocationUpdated::class]);
+
+        $this->actingAs($courier)->postJson(
+            "/api/courier/orders/{$order->id}/location",
+            $payload
+        )->assertCreated();
+
+        Event::assertNotDispatched(CourierLocationUpdated::class);
+    }
+
 }
 

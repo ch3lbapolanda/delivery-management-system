@@ -36,5 +36,10 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="BROADCAST_CONNECTION" value="pusher"/>
+        <env name="PUSHER_APP_ID" value="12345"/>
+        <env name="PUSHER_APP_KEY" value="01234567890123456789012345678901"/>
+        <env name="PUSHER_APP_SECRET" value="01234567890123456789012345678901"/>
+        <env name="PUSHER_APP_CLUSTER" value="mt1"/>
     </php>
 </phpunit>
