@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\CourierAvailabilityController;
 use App\Http\Controllers\Api\CourierLocationController;
 use App\Http\Controllers\Api\OrderTrackingController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\Api\NotificationController;
 
 
 
@@ -33,6 +34,30 @@ Route::middleware('auth:sanctum')->group(function () {
     // Authentication
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+
+    // ======================================
+    // NOTIFICATIONS
+    // ======================================
+
+    Route::get('/notifications', [
+    NotificationController::class,
+    'index',
+]);
+
+Route::get('/notifications/unread-count', [
+    NotificationController::class,
+    'unreadCount',
+]);
+
+Route::patch('/notifications/read-all', [
+    NotificationController::class,
+    'markAllAsRead',
+]);
+
+Route::patch('/notifications/{id}/read', [
+    NotificationController::class,
+    'markAsRead',
+]);
 
 
     // ======================================
