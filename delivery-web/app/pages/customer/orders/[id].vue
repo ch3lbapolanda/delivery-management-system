@@ -1,8 +1,8 @@
-
 <script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
 })
+  import { shouldUpdateGpsLocation } from '~/utils/gps'
 
 interface OrderHistory {
   id: number
@@ -117,33 +117,18 @@ const fetchTracking = async () => {
       message: string
     }>(`/orders/${route.params.id}/tracking`)
 
-    if (response.data) {
-  const responseTimestamp = Date.parse(
-    response.data.recorded_at
-  )
+    if (
+      shouldUpdateGpsLocation(
+        response.data,
+        trackingLocation.value
+      )
+    ) {
+      trackingLocation.value = response.data
+    }
 
-  if (
-    !Number.isFinite(responseTimestamp) ||
-    responseTimestamp > Date.now() + 120_000
-  ) {
-    return
-  }
-
-  const currentTimestamp = trackingLocation.value
-    ? Date.parse(trackingLocation.value.recorded_at)
-    : NaN
-
-  if (
-    !Number.isFinite(currentTimestamp) ||
-    responseTimestamp > currentTimestamp
-  ) {
-    trackingLocation.value = response.data
-  }
-}
-
-if (!trackingLocation.value) {
-  trackingMessage.value = response.message
-}
+    if (!trackingLocation.value) {
+      trackingMessage.value = response.message
+    }
   } catch {
     trackingMessage.value = 'Unable to retrieve courier location.'
   }
@@ -169,7 +154,14 @@ const startTracking = () => {
       .listen(
         '.courier.location.updated',
         (event: CourierLocationEvent) => {
-          if (event.order_id !== order.value?.id) return
+          if (
+  !shouldUpdateGpsLocation(
+    event,
+    trackingLocation.value
+  )
+) {
+  return
+          }
 
       const eventTimestamp = Date.parse(event.recorded_at)
 
