@@ -3,6 +3,7 @@
 definePageMeta({
   middleware: 'auth'
 })
+import { shouldUpdateGpsLocation } from '~/utils/gps'
 
 interface Person {
   id: number
@@ -168,33 +169,18 @@ const fetchTracking = async () => {
       message: string
     }>(`/dispatcher/orders/${route.params.id}/tracking`)
 
-    if (response.data) {
-  const responseTimestamp = Date.parse(
-    response.data.recorded_at
-  )
+    if (
+      shouldUpdateGpsLocation(
+        response.data,
+        trackingLocation.value
+      )
+    ) {
+      trackingLocation.value = response.data
+    }
 
-  if (
-    !Number.isFinite(responseTimestamp) ||
-    responseTimestamp > Date.now() + 120_000
-  ) {
-    return
-  }
-
-  const currentTimestamp = trackingLocation.value
-    ? Date.parse(trackingLocation.value.recorded_at)
-    : NaN
-
-  if (
-    !Number.isFinite(currentTimestamp) ||
-    responseTimestamp > currentTimestamp
-  ) {
-    trackingLocation.value = response.data
-  }
-}
-
-if (!trackingLocation.value) {
-  trackingMessage.value = response.message
-}
+    if (!trackingLocation.value) {
+      trackingMessage.value = response.message
+    }
   } catch {
     trackingMessage.value = 'Gagal mengambil lokasi kurir.'
   }
@@ -220,28 +206,15 @@ const startTracking = () => {
         (event: CourierLocationEvent) => {
           if (event.order_id !== order.value?.id) return
 
-          const eventTimestamp = Date.parse(event.recorded_at)
+          if (
+            !shouldUpdateGpsLocation(
+              event,
+              trackingLocation.value
+            )
+          ) {
+            return
+          }
 
-if (
-  !Number.isFinite(eventTimestamp) ||
-  eventTimestamp > Date.now() + 120_000
-) {
-  return
-}
-
-if (trackingLocation.value) {
-  const currentTimestamp = Date.parse(
-    trackingLocation.value.recorded_at
-  )
-
-  if (
-    Number.isFinite(currentTimestamp) &&
-    eventTimestamp <= currentTimestamp
-  ) {
-    return
-  }
-}
-          
           trackingLocation.value = {
             latitude: event.latitude,
             longitude: event.longitude,

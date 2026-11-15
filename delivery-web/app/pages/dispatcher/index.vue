@@ -3,6 +3,11 @@
 definePageMeta({
   middleware: 'auth'
 })
+import {
+  shouldUpdateGpsLocation,
+  getGpsHealth,
+  getGpsAge
+} from '~/utils/gps'
 
 interface Order {
   id: number
@@ -76,29 +81,6 @@ interface LiveCouriersResponse {
   data: FleetCourier[]
 }
 
-type GpsHealth = 'live' | 'stale' | 'offline'
-
-const getGpsHealth = (recordedAt: string): GpsHealth => {
-  const timestamp = new Date(recordedAt).getTime()
-
-  // Timestamp tidak valid atau terlalu jauh di masa depan.
-  if (
-    !Number.isFinite(timestamp) ||
-    timestamp > Date.now() + 120_000
-  ) {
-    return 'offline'
-  }
-
-  const age = Math.max(
-    0,
-    (Date.now() - timestamp) / 1000
-  )
-
-  if (age <= 30) return 'live'
-  if (age <= 90) return 'stale'
-
-  return 'offline'
-}
 
 const getGpsAge = (recordedAt: string) => {
   const timestamp = new Date(recordedAt).getTime()
@@ -293,11 +275,8 @@ liveCouriers.value = liveCouriers.value.map(item => {
     if (item.order_id !== orderId) return item
 
     // Ignore outdated GPS events.
-    if (
-        Date.parse(event.recorded_at) <=
-        Date.parse(item.recorded_at)
-    ) {
-        return item
+    if (!shouldUpdateGpsLocation(event, item)) {
+      return item
     }
 
     return {
