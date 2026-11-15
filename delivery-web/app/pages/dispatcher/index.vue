@@ -82,24 +82,7 @@ interface LiveCouriersResponse {
 }
 
 
-const getGpsAge = (recordedAt: string) => {
-  const timestamp = new Date(recordedAt).getTime()
 
-  if (
-    !Number.isFinite(timestamp) ||
-    timestamp > Date.now() + 120_000
-  ) {
-    return 'Invalid timestamp'
-  }
-
-  const seconds = Math.floor(
-    Math.max(0, Date.now() - timestamp) / 1000
-  )
-
-  if (seconds < 60) return `${seconds}s ago`
-
-  return `${Math.floor(seconds / 60)}m ago`
-}
 
 const fleetHealthSummary = computed(() => {
   // Trigger recalculation every time the clock changes
