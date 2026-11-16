@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\User;
+use App\Notifications\OrderNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,51 +37,47 @@ class DispatcherAssignmentController extends Controller
         ]);
     }
 
-  
-public function availabilityOverview(): JsonResponse
-{
-    
-$couriers = User::query()
-    ->whereHas('role', function ($query) {
-        $query->where('slug', 'courier');
-    })
-    ->select('id', 'name', 'email', 'availability_status')
-    ->withExists([
-        'assignedOrders as has_active_order' => function ($query) {
-            $query->whereIn('status', [
-                'assigned',
-                'picked_up',
-                'in_transit',
-            ]);
-        },
-    ])
-    ->orderBy('name')
-    ->get()
-    ->map(function ($courier) {
-        $courier->has_active_order = (bool) $courier->has_active_order;
+    public function availabilityOverview(): JsonResponse
+    {
+        $couriers = User::query()
+            ->whereHas('role', function ($query) {
+                $query->where('slug', 'courier');
+            })
+            ->select('id', 'name', 'email', 'availability_status')
+            ->withExists([
+                'assignedOrders as has_active_order' => function ($query) {
+                    $query->whereIn('status', [
+                        'assigned',
+                        'picked_up',
+                        'in_transit',
+                    ]);
+                },
+            ])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($courier) {
+                $courier->has_active_order = (bool) $courier->has_active_order;
 
-        $courier->work_status = $courier->has_active_order
-            ? 'busy'
-            : $courier->availability_status;
+                $courier->work_status = $courier->has_active_order
+                    ? 'busy'
+                    : $courier->availability_status;
 
-        return $courier;
-    });
+                return $courier;
+            });
 
-
-    return response()->json([
-        'message' => 'Courier availability retrieved successfully.',
-        'data' => [
-            'summary' => [
-                'available' => $couriers->where('work_status', 'available')->count(),
-                'busy' => $couriers->where('work_status', 'busy')->count(),
-                'offline' => $couriers->where('work_status', 'offline')->count(),
-                'total' => $couriers->count(),
+        return response()->json([
+            'message' => 'Courier availability retrieved successfully.',
+            'data' => [
+                'summary' => [
+                    'available' => $couriers->where('work_status', 'available')->count(),
+                    'busy' => $couriers->where('work_status', 'busy')->count(),
+                    'offline' => $couriers->where('work_status', 'offline')->count(),
+                    'total' => $couriers->count(),
+                ],
+                'couriers' => $couriers,
             ],
-            'couriers' => $couriers,
-        ],
-    ]);
-}
-
+        ]);
+    }
 
     public function assign(Request $request, int $id): JsonResponse
     {
@@ -162,6 +159,21 @@ $couriers = User::query()
                 'message' => $result['message'],
             ], 422);
         }
+
+        // Notify courier after successful order assignment.
+        $courier = $result['order']->courier;
+
+        $courier->notify(new OrderNotification(
+            type: 'order_assigned',
+            title: 'New Delivery Assignment',
+            message: "You have been assigned order {$result['order']->order_number}.",
+            orderId: $result['order']->id,
+            orderNumber: $result['order']->order_number,
+            data: [
+                'status' => $result['order']->status,
+                'customer_id' => $result['order']->customer_id,
+            ],
+        ));
 
         return response()->json([
             'message' => 'Courier assigned successfully.',
