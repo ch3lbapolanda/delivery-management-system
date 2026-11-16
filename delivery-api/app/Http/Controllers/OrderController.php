@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use App\Models\User;
+use App\Notifications\OrderNotification;
 
 class OrderController extends Controller
 {
@@ -86,6 +88,27 @@ class OrderController extends Controller
 
             return $order;
         });
+
+      // Notify all admins and dispatchers after order creation.
+$recipients = User::query()
+    ->whereHas('role', function ($query) {
+        $query->whereIn('slug', ['admin', 'dispatcher']);
+    })
+    ->get();
+
+foreach ($recipients as $recipient) {
+    $recipient->notify(new OrderNotification(
+        type: 'order_created',
+        title: 'New Order Received',
+        message: "A new order {$order->order_number} has been created.",
+        orderId: $order->id,
+        orderNumber: $order->order_number,
+        data: [
+            'status' => $order->status,
+            'customer_id' => $order->customer_id,
+        ],
+    ));
+}
 
         $order->load('statusHistories');
 
