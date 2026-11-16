@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Models\Order;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\OrderNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -70,7 +72,11 @@ class OrderLifecycleTest extends TestCase
         return $this->post(
             "/api/courier/orders/{$orderId}/proof",
             [
-                'photo' => UploadedFile::fake()->create('proof.jpg', 100, 'image/jpeg'),
+                'photo' => UploadedFile::fake()->create(
+                    'proof.jpg',
+                    100,
+                    'image/jpeg'
+                ),
                 'recipient_name' => 'Recipient Test',
                 'notes' => 'Package received successfully.',
             ],
@@ -82,6 +88,8 @@ class OrderLifecycleTest extends TestCase
 
     public function test_courier_can_complete_order_status_transitions(): void
     {
+        Notification::fake();
+
         $customer = $this->createUser('customer');
         $courier = $this->createUser('courier');
 
@@ -124,6 +132,22 @@ class OrderLifecycleTest extends TestCase
             'old_status' => 'picked_up',
             'new_status' => 'in_transit',
         ]);
+
+        Notification::assertSentTo(
+            $customer,
+            OrderNotification::class,
+            function ($notification) {
+                return $notification->type === 'order_picked_up';
+            }
+        );
+
+        Notification::assertSentTo(
+            $customer,
+            OrderNotification::class,
+            function ($notification) {
+                return $notification->type === 'order_in_transit';
+            }
+        );
     }
 
     public function test_courier_cannot_skip_order_status_transition(): void
@@ -298,3 +322,4 @@ class OrderLifecycleTest extends TestCase
         ]);
     }
 }
+

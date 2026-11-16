@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use App\Notifications\OrderNotification;
 use App\Services\DeliveryEtaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -123,6 +124,36 @@ class CourierOrderController extends Controller
 
             return $order;
         });
+
+        // Notify customer after successful status update.
+        $order->load('customer');
+
+        $notificationDetails = [
+            'picked_up' => [
+                'type' => 'order_picked_up',
+                'title' => 'Order Picked Up',
+                'message' => "Your order {$order->order_number} has been picked up by the courier.",
+            ],
+            'in_transit' => [
+                'type' => 'order_in_transit',
+                'title' => 'Order On The Way',
+                'message' => "Your order {$order->order_number} is now on the way.",
+            ],
+        ];
+
+        $notification = $notificationDetails[$order->status];
+
+        $order->customer->notify(new OrderNotification(
+            type: $notification['type'],
+            title: $notification['title'],
+            message: $notification['message'],
+            orderId: $order->id,
+            orderNumber: $order->order_number,
+            data: [
+                'status' => $order->status,
+                'courier_id' => $order->courier_id,
+            ],
+        ));
 
         $order->load([
             'customer:id,name,email',
