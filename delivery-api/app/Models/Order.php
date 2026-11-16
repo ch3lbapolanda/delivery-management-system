@@ -57,7 +57,10 @@ class Order extends Model
 
     public function statusHistories(): HasMany
     {
-        return $this->hasMany(OrderStatusHistory::class);
+        return $this->hasMany(OrderStatusHistory::class)
+            ->with('changedBy:id,name')
+            ->orderBy('created_at')
+            ->orderBy('id');
     }
 
     public function deliveryProof(): HasOne

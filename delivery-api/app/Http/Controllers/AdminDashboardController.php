@@ -197,6 +197,20 @@ class AdminDashboardController extends Controller
             'data' => $query->paginate(10),
         ]);
     }
+    public function show(int $id): JsonResponse
+    {
+        $order = Order::with([
+            'customer:id,name,email',
+            'courier:id,name,email',
+            'statusHistories',
+            'deliveryProof.uploadedBy:id,name',
+        ])->findOrFail($id);
+    
+        return response()->json([
+            'message' => 'Admin order retrieved successfully.',
+            'data' => $order,
+        ]);
+    }
 
     public function users(Request $request): JsonResponse
     {

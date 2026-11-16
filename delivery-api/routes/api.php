@@ -196,6 +196,11 @@ Route::patch('/notifications/{id}/read', [
                 'orders',
             ]);
 
+          Route::get('/orders/{id}', [
+    AdminDashboardController::class,
+    'show',
+]);
+
             Route::get('/users', [
                 AdminDashboardController::class,
                 'users',
