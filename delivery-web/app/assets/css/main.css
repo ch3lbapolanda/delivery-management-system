@@ -6053,3 +6053,97 @@ button {
 .gps-live { color: #36c98f; }
 .gps-stale { color: #f2b34b; }
 .gps-offline { color: #e45b5b; }
+
+/* ORDER ACTIVITY TIMELINE */
+
+.admin-timeline-section {
+  margin-top: 24px;
+}
+
+.admin-timeline {
+  position: relative;
+  padding-left: 8px;
+}
+
+.admin-timeline-item {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 24px;
+}
+
+.admin-timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 14px;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.admin-timeline-dot {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: #64748b;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  z-index: 1;
+}
+
+.admin-timeline-dot.status-delivered {
+  background: #22c55e;
+}
+
+.admin-timeline-dot.status-cancelled {
+  background: #ef4444;
+}
+
+.admin-timeline-dot.status-in_transit {
+  background: #38bdf8;
+}
+
+.admin-timeline-dot.status-picked_up {
+  background: #a78bfa;
+}
+
+.admin-timeline-dot.status-assigned {
+  background: #f59e0b;
+}
+
+.admin-timeline-content {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.admin-timeline-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.admin-timeline-heading strong {
+  font-size: 14px;
+}
+
+.admin-timeline-heading small {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.admin-timeline-content p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

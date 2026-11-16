@@ -20,6 +20,19 @@ interface DeliveryProof {
   notes: string | null
   created_at: string
 }
+interface StatusHistory {
+  id: number
+  old_status: string | null
+  new_status: string
+  note: string | null
+  created_at: string
+  changed_by: Person | null
+}
+
+interface AdminOrderDetail extends AdminOrder {
+  status_histories: StatusHistory[]
+}
+  
   interface PricingDetails {
   delivery_type: string
   distance_km: number
@@ -74,6 +87,9 @@ const lastPage = ref(1)
 const totalOrders = ref(0)
 
 const selectedOrder = ref<AdminOrder | null>(null)
+const selectedOrderDetail = ref<AdminOrderDetail | null>(null)
+const detailLoading = ref(false)
+const detailError = ref('')
 
 const filters = [
   { label: 'All', value: 'all' },
@@ -166,9 +182,36 @@ const changePage = async (page: number) => {
   await fetchOrders()
 }
 
-const openOrder = (order: AdminOrder) => {
-  selectedOrder.value =
-    selectedOrder.value?.id === order.id ? null : order
+const openOrder = async (order: AdminOrder) => {
+  if (selectedOrder.value?.id === order.id) {
+    selectedOrder.value = null
+    selectedOrderDetail.value = null
+    return
+  }
+
+  selectedOrder.value = order
+  await fetchOrderDetail(order.id)
+}
+
+const fetchOrderDetail = async (id: number) => {
+  detailLoading.value = true
+  detailError.value = ''
+  selectedOrderDetail.value = null
+
+  try {
+    const response = await api<{ data: AdminOrderDetail }>(
+      `/admin/orders/${id}`
+    )
+
+    if (selectedOrder.value?.id === id) {
+      selectedOrderDetail.value = response.data
+    }
+  } catch (error: any) {
+    detailError.value =
+      error?.data?.message || 'Failed to load order activity.'
+  } finally {
+    detailLoading.value = false
+  }
 }
 
 const goBack = () => {
@@ -303,6 +346,56 @@ onMounted(fetchOrders)
             class="admin-detail-card"
           >
             <h3>Order Details</h3>
+            <!-- ORDER ACTIVITY TIMELINE -->
+<div class="admin-order-detail-spacing admin-timeline-section">
+  <h4>Order Activity</h4>
+
+  <div v-if="detailLoading" class="admin-sheet-state">
+    Loading order activity...
+  </div>
+
+  <div v-else-if="detailError" class="admin-sheet-state">
+    <p>{{ detailError }}</p>
+    <button @click="fetchOrderDetail(order.id)">
+      Try again
+    </button>
+  </div>
+
+  <div
+    v-else-if="selectedOrderDetail?.status_histories?.length"
+    class="admin-timeline"
+  >
+    <div
+      v-for="history in selectedOrderDetail.status_histories"
+      :key="history.id"
+      class="admin-timeline-item"
+    >
+      <span
+        class="admin-timeline-dot"
+        :class="`status-${history.new_status}`"
+      ></span>
+
+      <div class="admin-timeline-content">
+        <div class="admin-timeline-heading">
+          <strong>{{ statusLabel(history.new_status) }}</strong>
+          <small>{{ formatDate(history.created_at) }}</small>
+        </div>
+
+        <p>
+          By: {{ history.changed_by?.name || 'System' }}
+        </p>
+
+        <p v-if="history.note">
+          {{ history.note }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div v-else class="admin-pod-empty">
+    No activity history available.
+  </div>
+</div>
             
             <div class="admin-price-card">
   <span class="admin-eyebrow">PAYMENT INFORMATION</span>
