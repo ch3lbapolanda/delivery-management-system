@@ -355,6 +355,8 @@ onMounted(() => {
         </div>
       </div>
 
+      <NotificationBell />
+
       <button class="logout-btn" @click="handleLogout">
         Sign out ↗
       </button>

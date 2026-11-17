@@ -136,6 +136,8 @@ onMounted(fetchOrders)
         </div>
       </div>
 
+      <NotificationBell />
+
       <button
         class="logout-btn"
         @click="handleLogout"

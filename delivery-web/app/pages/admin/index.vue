@@ -407,6 +407,8 @@ onBeforeUnmount(() => {
         <p>Manage your delivery operations.</p>
       </div>
 
+      <NotificationBell />
+
       <button class="admin-logout" @click="handleLogout">
         Logout
       </button>

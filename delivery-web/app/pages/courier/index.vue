@@ -264,6 +264,8 @@ onMounted(() => {
         <p>Selamat bekerja, {{ user?.name || 'Courier' }}</p>
       </div>
 
+      <NotificationBell />
+
       <button
         class="courier-logout"
         @click="handleLogout"
