@@ -4,12 +4,19 @@ definePageMeta({
 })
   import { shouldUpdateGpsLocation } from '~/utils/gps'
 
-interface OrderHistory {
+  interface Person {
+  id: number
+  name: string
+  email?: string
+  }
+
+  interface OrderHistory {
   id: number
   old_status: string | null
   new_status: string
   note: string | null
   created_at: string
+  changed_by: Person | null
 }
 
 interface OrderEta {
@@ -675,8 +682,13 @@ onMounted(() => {
             <strong>
               {{ history.new_status.replace('_', ' ') }}
             </strong>
-            <p>{{ history.note || 'Status updated' }}</p>
-            <small>{{ formatDate(history.created_at) }}</small>
+           <p>{{ history.note || 'Status updated' }}</p>
+          <small>
+  By: {{ history.changed_by?.name || 'System' }}
+  · {{ formatDate(history.created_at) }}
+</small>
+
+
           </div>
         </div>
 
