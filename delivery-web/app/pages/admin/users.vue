@@ -16,6 +16,7 @@ interface AdminUser {
   email: string
   role_id: number
   role: UserRole | null
+  is_active: boolean
   created_at: string
 }
 
@@ -30,7 +31,7 @@ interface UsersResponse {
 }
 
 const api = useApi()
-
+const { user: currentUser } = useAuth()
 const users = ref<AdminUser[]>([])
 const loading = ref(true)
 const errorMessage = ref('')
@@ -102,6 +103,26 @@ const changePage = async (page: number) => {
 const toggleUser = (user: AdminUser) => {
   selectedUser.value =
     selectedUser.value?.id === user.id ? null : user
+}
+
+  const toggleUserStatus = async (user: AdminUser) => {
+  const action = user.is_active ? 'menonaktifkan' : 'mengaktifkan'
+
+  if (!confirm(`Yakin ingin ${action} akun ${user.name}?`)) return
+
+  try {
+    await api(`/admin/users/${user.id}/status`, {
+      method: 'PATCH',
+      body: {
+        is_active: !user.is_active
+      }
+    })
+
+    await fetchUsers()
+    selectedUser.value = null
+  } catch (error: any) {
+    alert(error?.data?.message || `Gagal ${action} akun.`)
+  }
 }
 
 const roleLabel = (role: string | undefined) => {
@@ -225,8 +246,16 @@ onMounted(fetchUsers)
               <strong>{{ user.name }}</strong>
               <small>{{ user.email }}</small>
               <span class="admin-user-role">
-                {{ roleLabel(user.role?.slug) }}
-              </span>
+  {{ roleLabel(user.role?.slug) }}
+</span>
+
+
+              <span
+  class="admin-user-status"
+  :class="user.is_active ? 'active' : 'inactive'"
+>
+  {{ user.is_active ? 'ACTIVE' : 'INACTIVE' }}
+</span>
             </div>
 
             <span class="admin-row-arrow">
@@ -244,7 +273,21 @@ onMounted(fetchUsers)
             <p><strong>Name:</strong> {{ user.name }}</p>
             <p><strong>Email:</strong> {{ user.email }}</p>
             <p><strong>Role:</strong> {{ roleLabel(user.role?.slug) }}</p>
+            <p><strong>Status:</strong>{{ user.is_active ? 'Active' : 'Inactive' }}</p>
             <p><strong>Registered:</strong> {{ formatDate(user.created_at) }}</p>
+            <div
+  v-if="user.role?.slug !== 'admin' && user.id !== currentUser?.id"
+  class="admin-user-actions"
+>
+  <button
+    type="button"
+    class="admin-user-status-button"
+    :class="user.is_active ? 'deactivate' : 'activate'"
+    @click.stop="toggleUserStatus(user)"
+  >
+    {{ user.is_active ? 'Deactivate Account' : 'Activate Account' }}
+  </button>
+</div>
           </div>
         </article>
 
