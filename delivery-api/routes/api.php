@@ -206,6 +206,10 @@ Route::patch('/notifications/{id}/read', [
     AdminUserController::class,
     'update',
 ]);
+          Route::patch('/users/{id}/status', [
+    AdminUserController::class,
+    'updateStatus',
+]);
 
           Route::get('/orders/{id}', [
     AdminDashboardController::class,

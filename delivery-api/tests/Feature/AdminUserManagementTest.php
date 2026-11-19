@@ -170,5 +170,106 @@ class AdminUserManagementTest extends TestCase
             'email' => $admin->email,
         ]);
     }
+
+    public function test_admin_can_deactivate_dispatcher_and_revoke_tokens(): void
+    {
+        $admin = $this->createAdmin();
+
+        $dispatcherRole = Role::where('slug', 'dispatcher')->firstOrFail();
+
+        $dispatcher = User::factory()->create([
+            'role_id' => $dispatcherRole->id,
+            'is_active' => true,
+        ]);
+
+        $token = $dispatcher->createToken('test-token');
+
+        Sanctum::actingAs($admin);
+
+        $response = $this->patchJson(
+            "/api/admin/users/{$dispatcher->id}/status",
+            ['is_active' => false]
+        );
+
+        $response->assertOk()
+            ->assertJsonPath('data.is_active', false);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $dispatcher->id,
+            'is_active' => false,
+        ]);
+
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'id' => $token->accessToken->id,
+        ]);
+    }
+
+    public function test_admin_can_reactivate_dispatcher_account(): void
+    {
+        $admin = $this->createAdmin();
+
+        $dispatcherRole = Role::where('slug', 'dispatcher')->firstOrFail();
+
+        $dispatcher = User::factory()->create([
+            'role_id' => $dispatcherRole->id,
+            'is_active' => false,
+        ]);
+
+        Sanctum::actingAs($admin);
+
+        $response = $this->patchJson(
+            "/api/admin/users/{$dispatcher->id}/status",
+            ['is_active' => true]
+        );
+
+        $response->assertOk()
+            ->assertJsonPath('data.is_active', true);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $dispatcher->id,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_admin_cannot_deactivate_own_account(): void
+    {
+        $admin = $this->createAdmin();
+
+        Sanctum::actingAs($admin);
+
+        $response = $this->patchJson(
+            "/api/admin/users/{$admin->id}/status",
+            ['is_active' => false]
+        );
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_admin_cannot_deactivate_another_admin_account(): void
+    {
+        $admin = $this->createAdmin();
+
+        $anotherAdmin = $this->createAdmin();
+
+        Sanctum::actingAs($admin);
+
+        $response = $this->patchJson(
+            "/api/admin/users/{$anotherAdmin->id}/status",
+            ['is_active' => false]
+        );
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $anotherAdmin->id,
+            'is_active' => true,
+        ]);
+    }
 }
+
 

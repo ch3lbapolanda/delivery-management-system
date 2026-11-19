@@ -103,5 +103,47 @@ class AdminUserController extends Controller
             'data' => $user,
         ]);
     }
+  public function updateStatus(Request $request, int $id): JsonResponse
+{
+    $validated = $request->validate([
+        'is_active' => ['required', 'boolean'],
+    ]);
+
+    $user = User::with('role')->findOrFail($id);
+
+    if ($user->role?->slug === 'admin') {
+        return response()->json([
+            'message' => 'Admin accounts cannot be deactivated.',
+        ], 403);
+    }
+
+    if (
+        $request->user()->id === $user->id &&
+        !$validated['is_active']
+    ) {
+        return response()->json([
+            'message' => 'You cannot deactivate your own account.',
+        ], 403);
+    }
+
+    $user->update([
+        'is_active' => $validated['is_active'],
+    ]);
+
+    if (!$user->is_active) {
+        $user->tokens()->delete();
+    }
+
+    return response()->json([
+        'message' => $user->is_active
+            ? 'User account activated successfully.'
+            : 'User account deactivated successfully.',
+        'data' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'is_active' => $user->is_active,
+        ],
+    ]);
+}
 }
 
