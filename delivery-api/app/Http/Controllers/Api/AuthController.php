@@ -40,31 +40,37 @@ class AuthController extends Controller
     }
 
     public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
+{
+    $credentials = $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required', 'string'],
+    ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+    $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user || !Hash::check(
-            $credentials['password'],
-            $user->password
-        )) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Login successful',
-            'user' => $user->load('role'),
-            'token' => $token,
+    if (!$user || !Hash::check(
+        $credentials['password'],
+        $user->password
+    )) {
+        throw ValidationException::withMessages([
+            'email' => ['The provided credentials are incorrect.'],
         ]);
     }
+
+    if (!$user->is_active) {
+        return response()->json([
+            'message' => 'Your account has been deactivated.',
+        ], 403);
+    }
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Login successful',
+        'user' => $user->load('role'),
+        'token' => $token,
+    ]);
+}
 
     public function logout(Request $request)
     {

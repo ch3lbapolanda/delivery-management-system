@@ -29,7 +29,7 @@ Route::post('/login', [AuthController::class, 'login']);
 // PROTECTED ENDPOINTS
 // ==========================================
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
     // Authentication
     Route::post('/logout', [AuthController::class, 'logout']);

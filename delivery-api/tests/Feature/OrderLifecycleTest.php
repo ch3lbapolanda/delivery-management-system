@@ -36,6 +36,7 @@ class OrderLifecycleTest extends TestCase
             'password' => Hash::make('password'),
             'role_id' => $role->id,
             'availability_status' => 'available',
+                         'is_active' => true,
         ]);
 
         $user->save();

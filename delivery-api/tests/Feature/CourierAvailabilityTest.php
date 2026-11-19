@@ -31,6 +31,7 @@ class CourierAvailabilityTest extends TestCase
             'email' => uniqid() . '@test.com',
             'password' => Hash::make('password'),
             'role_id' => $role->id,
+            'is_active' => true,
             'availability_status' => 'available',
         ]);
 
@@ -230,3 +231,4 @@ class CourierAvailabilityTest extends TestCase
         $response->assertForbidden();
     }
 }
+
