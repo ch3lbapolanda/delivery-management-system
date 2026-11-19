@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\CourierLocationController;
 use App\Http\Controllers\Api\OrderTrackingController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\AdminUserController;
 
 
 
@@ -195,6 +196,16 @@ Route::patch('/notifications/{id}/read', [
                 AdminDashboardController::class,
                 'orders',
             ]);
+
+          Route::post('/users', [
+    AdminUserController::class,
+    'store',
+]);
+
+          Route::put('/users/{id}', [
+    AdminUserController::class,
+    'update',
+]);
 
           Route::get('/orders/{id}', [
     AdminDashboardController::class,
