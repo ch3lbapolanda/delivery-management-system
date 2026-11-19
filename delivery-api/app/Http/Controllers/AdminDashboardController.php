@@ -223,8 +223,15 @@ class AdminDashboardController extends Controller
         ]);
 
         $query = User::with('role')
-            ->select('id', 'name', 'email', 'role_id', 'created_at')
-            ->latest();
+    ->select(
+        'id',
+        'name',
+        'email',
+        'role_id',
+        'is_active',
+        'created_at'
+    )
+    ->latest();
 
         $role = $validated['role'] ?? 'all';
 
