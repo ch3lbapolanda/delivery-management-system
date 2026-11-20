@@ -25,7 +25,6 @@ use App\Http\Controllers\Api\AdminUserController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-
 // ==========================================
 // PROTECTED ENDPOINTS
 // ==========================================

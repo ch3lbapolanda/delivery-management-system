@@ -8,6 +8,7 @@ use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
@@ -39,12 +40,22 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
+    
+public function login(Request $request)
 {
     $credentials = $request->validate([
         'email' => ['required', 'email'],
         'password' => ['required', 'string'],
     ]);
+
+    $key = strtolower($credentials['email']) . '|' . $request->ip();
+
+    if (RateLimiter::tooManyAttempts($key, 5)) {
+        return response()->json([
+            'message' => 'Too many login attempts. Please try again later.',
+            'retry_after' => RateLimiter::availableIn($key),
+        ], 429);
+    }
 
     $user = User::where('email', $credentials['email'])->first();
 
@@ -52,16 +63,22 @@ class AuthController extends Controller
         $credentials['password'],
         $user->password
     )) {
+        RateLimiter::hit($key, 60);
+
         throw ValidationException::withMessages([
             'email' => ['The provided credentials are incorrect.'],
         ]);
     }
 
     if (!$user->is_active) {
+        RateLimiter::hit($key, 60);
+
         return response()->json([
             'message' => 'Your account has been deactivated.',
         ], 403);
     }
+
+    RateLimiter::clear($key);
 
     $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -71,6 +88,7 @@ class AuthController extends Controller
         'token' => $token,
     ]);
 }
+
 
     public function logout(Request $request)
     {

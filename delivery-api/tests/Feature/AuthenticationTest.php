@@ -220,4 +220,61 @@ class AuthenticationTest extends TestCase
         ->getJson('/api/me')
         ->assertOk();
 }
+  
+    public function test_login_is_rate_limited_after_five_failed_attempts(): void
+    {
+        $this->createUser([
+            'email' => 'ratelimit@test.com',
+        ]);
+
+        $credentials = [
+            'email' => 'ratelimit@test.com',
+            'password' => 'wrong-password',
+        ];
+
+        // Lima percobaan gagal masih mendapat respons validasi.
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/login', $credentials)
+                ->assertUnprocessable();
+        }
+
+        // Percobaan keenam ditolak oleh rate limiter.
+        $this->postJson('/api/login', $credentials)
+            ->assertStatus(429);
+    }
+
+    public function test_successful_login_resets_failed_attempts(): void
+    {
+        $this->createUser([
+            'email' => 'resetlimit@test.com',
+        ]);
+
+        $wrongCredentials = [
+            'email' => 'resetlimit@test.com',
+            'password' => 'wrong-password',
+        ];
+
+        // Empat percobaan gagal.
+        for ($i = 0; $i < 4; $i++) {
+            $this->postJson('/api/login', $wrongCredentials)
+                ->assertUnprocessable();
+        }
+
+        // Login berhasil harus mereset penghitung.
+        $this->postJson('/api/login', [
+            'email' => 'resetlimit@test.com',
+            'password' => 'password123',
+        ])->assertOk();
+
+        // Lima kegagalan baru masih diperbolehkan.
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/login', $wrongCredentials)
+                ->assertUnprocessable();
+        }
+
+        // Kegagalan keenam setelah reset ditolak.
+        $this->postJson('/api/login', $wrongCredentials)
+            ->assertStatus(429);
+    }
+
 }
