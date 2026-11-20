@@ -322,5 +322,104 @@ class OrderLifecycleTest extends TestCase
             'status' => 'delivered',
         ]);
     }
+  public function test_courier_cannot_upload_non_image_proof(): void
+{
+    Storage::fake('public');
+
+    $customer = $this->createUser('customer');
+    $courier = $this->createUser('courier');
+    $order = $this->createOrder($customer, $courier, 'in_transit');
+
+    Sanctum::actingAs($courier);
+
+    $response = $this->postJson(
+        "/api/courier/orders/{$order->id}/proof",
+        [
+            'photo' => UploadedFile::fake()->create(
+                'document.pdf',
+                100,
+                'application/pdf'
+            ),
+            'recipient_name' => 'Recipient Test',
+        ]
+    );
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors('photo');
+
+    $this->assertDatabaseCount('delivery_proofs', 0);
+}
+
+public function test_courier_cannot_upload_proof_larger_than_5mb(): void
+{
+    Storage::fake('public');
+
+    $customer = $this->createUser('customer');
+    $courier = $this->createUser('courier');
+    $order = $this->createOrder($customer, $courier, 'in_transit');
+
+    Sanctum::actingAs($courier);
+
+    $response = $this->post(
+        "/api/courier/orders/{$order->id}/proof",
+        [
+            'photo' => UploadedFile::fake()->create(
+                'proof.jpg',
+                5121,
+                'image/jpeg'
+            ),
+            'recipient_name' => 'Recipient Test',
+        ],
+        ['Accept' => 'application/json']
+    );
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors('photo');
+
+    $this->assertDatabaseCount('delivery_proofs', 0);
+}
+
+public function test_courier_cannot_upload_proof_for_another_couriers_order(): void
+{
+    Storage::fake('public');
+
+    $customer = $this->createUser('customer');
+    $ownerCourier = $this->createUser('courier');
+    $otherCourier = $this->createUser('courier');
+
+    $order = $this->createOrder(
+        $customer,
+        $ownerCourier,
+        'in_transit'
+    );
+
+    Sanctum::actingAs($otherCourier);
+
+    $response = $this->uploadProof($order->id);
+
+    $response->assertNotFound();
+
+    $this->assertDatabaseCount('delivery_proofs', 0);
+
+    $this->assertSame(
+        [],
+        Storage::disk('public')->allFiles('delivery-proofs')
+    );
+}
+
+public function test_guest_cannot_upload_delivery_proof(): void
+{
+    Storage::fake('public');
+
+    $customer = $this->createUser('customer');
+    $courier = $this->createUser('courier');
+    $order = $this->createOrder($customer, $courier, 'in_transit');
+
+    $response = $this->uploadProof($order->id);
+
+    $response->assertUnauthorized();
+
+    $this->assertDatabaseCount('delivery_proofs', 0);
+}
 }
 
