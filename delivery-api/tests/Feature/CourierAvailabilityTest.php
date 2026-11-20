@@ -230,5 +230,49 @@ class CourierAvailabilityTest extends TestCase
 
         $response->assertForbidden();
     }
+  public function test_courier_cannot_set_invalid_availability_status(): void
+{
+    $courier = $this->createUser('courier');
+
+    Sanctum::actingAs($courier);
+
+    $response = $this->patchJson('/api/courier/availability', [
+        'availability_status' => 'busy',
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors('availability_status');
+
+    $this->assertDatabaseHas('users', [
+        'id' => $courier->id,
+        'availability_status' => 'available',
+    ]);
+}
+
+public function test_courier_cannot_change_another_couriers_availability(): void
+{
+    $courier = $this->createUser('courier');
+    $anotherCourier = $this->createUser('courier');
+
+    Sanctum::actingAs($courier);
+
+    $response = $this->patchJson('/api/courier/availability', [
+        'availability_status' => 'offline',
+        'courier_id' => $anotherCourier->id,
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.availability_status', 'offline');
+
+    $this->assertDatabaseHas('users', [
+        'id' => $courier->id,
+        'availability_status' => 'offline',
+    ]);
+
+    $this->assertDatabaseHas('users', [
+        'id' => $anotherCourier->id,
+        'availability_status' => 'available',
+    ]);
+}
 }
 
