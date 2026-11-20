@@ -354,6 +354,80 @@ public function test_location_endpoint_rejects_future_timestamp(): void
     Event::assertNotDispatched(CourierLocationUpdated::class);
 }
 
+  public function test_location_endpoint_rejects_invalid_recorded_at(): void
+{
+    $customer = $this->createUser('customer');
+    $courier = $this->createUser('courier');
+    $order = $this->createInTransitOrder($customer, $courier);
+
+    $payload = $this->locationPayload();
+    $payload['recorded_at'] = 'not-a-date';
+
+    $response = $this->actingAs($courier)->postJson(
+        "/api/courier/orders/{$order->id}/location",
+        $payload
+    );
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors('recorded_at');
+
+    $this->assertDatabaseCount('courier_locations', 0);
+}
+
+public function test_location_endpoint_rejects_invalid_optional_gps_values(): void
+{
+    $customer = $this->createUser('customer');
+    $courier = $this->createUser('courier');
+    $order = $this->createInTransitOrder($customer, $courier);
+
+    $payload = $this->locationPayload();
+    $payload['accuracy'] = -1;
+    $payload['heading'] = 361;
+    $payload['speed'] = 1001;
+
+    $response = $this->actingAs($courier)->postJson(
+        "/api/courier/orders/{$order->id}/location",
+        $payload
+    );
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'accuracy',
+            'heading',
+            'speed',
+        ]);
+
+    $this->assertDatabaseCount('courier_locations', 0);
+}
+
+public function test_courier_can_submit_location_without_optional_gps_values(): void
+{
+    $customer = $this->createUser('customer');
+    $courier = $this->createUser('courier');
+    $order = $this->createInTransitOrder($customer, $courier);
+
+    $payload = [
+        'latitude' => -0.5071,
+        'longitude' => 101.4478,
+        'recorded_at' => now()->toISOString(),
+    ];
+
+    $response = $this->actingAs($courier)->postJson(
+        "/api/courier/orders/{$order->id}/location",
+        $payload
+    );
+
+    $response->assertCreated();
+
+    $this->assertDatabaseHas('courier_locations', [
+        'order_id' => $order->id,
+        'courier_id' => $courier->id,
+        'accuracy' => null,
+        'heading' => null,
+        'speed' => null,
+    ]);
+}
+
 
 }
 
