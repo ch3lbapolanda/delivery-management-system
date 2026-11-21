@@ -77,6 +77,14 @@ interface OrdersResponse {
 const api = useApi()
 const route = useRoute()
 
+const {
+  imageUrl: proofImageUrl,
+  loading: proofImageLoading,
+  error: proofImageError,
+  loadImage: loadProofImage,
+  clearImage: clearProofImage,
+} = usePrivateImage()
+  
 const orders = ref<AdminOrder[]>([])
 const loading = ref(true)
 const errorMessage = ref('')
@@ -186,9 +194,11 @@ const openOrder = async (order: AdminOrder) => {
   if (selectedOrder.value?.id === order.id) {
     selectedOrder.value = null
     selectedOrderDetail.value = null
+    clearProofImage()
     return
   }
 
+  clearProofImage()
   selectedOrder.value = order
   await fetchOrderDetail(order.id)
 }
@@ -197,6 +207,7 @@ const fetchOrderDetail = async (id: number) => {
   detailLoading.value = true
   detailError.value = ''
   selectedOrderDetail.value = null
+  clearProofImage()
 
   try {
     const response = await api<{ data: AdminOrderDetail }>(
@@ -205,6 +216,12 @@ const fetchOrderDetail = async (id: number) => {
 
     if (selectedOrder.value?.id === id) {
       selectedOrderDetail.value = response.data
+
+      const photoUrl = response.data.delivery_proof?.photo_url
+
+      if (photoUrl) {
+        await loadProofImage(photoUrl)
+      }
     }
   } catch (error: any) {
     detailError.value =
@@ -505,80 +522,96 @@ onMounted(fetchOrders)
             </div>
 
             <!-- PROOF OF DELIVERY -->
-            <div class="admin-order-detail-spacing admin-pod-section">
-              <h4>Proof of Delivery</h4>
+<div class="admin-order-detail-spacing admin-pod-section">
+  <h4>Proof of Delivery</h4>
 
-              <div
-                v-if="order.delivery_proof"
-                class="admin-pod-content"
-              >
-                <div class="admin-pod-status">
-                  <span>✓</span>
-                  Delivery proof available
-                </div>
+  <div v-if="detailLoading" class="admin-sheet-state">
+    Loading delivery proof...
+  </div>
 
-                <a
-                  :href="order.delivery_proof.photo_url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="admin-pod-image-link"
-                >
-                  <img
-                    :src="order.delivery_proof.photo_url"
-                    alt="Proof of delivery"
-                    class="admin-pod-image"
-                  />
-                </a>
+  <div
+    v-else-if="selectedOrderDetail?.delivery_proof"
+    class="admin-pod-content"
+  >
+    <div class="admin-pod-status">
+      <span>✓</span>
+      Delivery proof available
+    </div>
 
-                <div class="admin-pod-info">
-                  <div>
-                    <span>Received By</span>
-                    <strong>
-                      {{ order.delivery_proof.recipient_name }}
-                    </strong>
-                  </div>
+    <a
+      v-if="proofImageUrl"
+      :href="proofImageUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="admin-pod-image-link"
+    >
+      <img
+        :src="proofImageUrl"
+        alt="Proof of delivery"
+        class="admin-pod-image"
+      />
+    </a>
 
-                  <div>
-                    <span>Uploaded By</span>
-                    <strong>
-                      {{ order.delivery_proof.uploaded_by?.name || 'Unknown' }}
-                    </strong>
-                  </div>
+    <p v-else-if="proofImageLoading">
+      Loading delivery proof image...
+    </p>
 
-                  <div>
-                    <span>Upload Time</span>
-                    <strong>
-                      {{ formatDate(order.delivery_proof.created_at) }}
-                    </strong>
-                  </div>
+    <p v-else-if="proofImageError">
+      {{ proofImageError }}
+    </p>
 
-                  <div v-if="order.delivery_proof.notes">
-                    <span>Courier Notes</span>
-                    <strong>{{ order.delivery_proof.notes }}</strong>
-                  </div>
-                </div>
+    <div class="admin-pod-info">
+      <div>
+        <span>Received By</span>
+        <strong>
+          {{ selectedOrderDetail.delivery_proof.recipient_name }}
+        </strong>
+      </div>
 
-                <a
-                  :href="order.delivery_proof.photo_url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="admin-pod-open-link"
-                >
-                  Open Full Image ↗
-                </a>
-              </div>
+      <div>
+        <span>Uploaded By</span>
+        <strong>
+          {{ selectedOrderDetail.delivery_proof.uploaded_by?.name || 'Unknown' }}
+        </strong>
+      </div>
 
-              <div v-else class="admin-pod-empty">
-                <template v-if="order.status === 'delivered'">
-                  Order delivered, but no proof was uploaded.
-                </template>
+      <div>
+        <span>Upload Time</span>
+        <strong>
+          {{ formatDate(selectedOrderDetail.delivery_proof.created_at) }}
+        </strong>
+      </div>
 
-                <template v-else>
-                  No delivery proof available yet.
-                </template>
-              </div>
-            </div>
+      <div v-if="selectedOrderDetail.delivery_proof.notes">
+        <span>Courier Notes</span>
+        <strong>
+          {{ selectedOrderDetail.delivery_proof.notes }}
+        </strong>
+      </div>
+    </div>
 
+    <a
+      v-if="proofImageUrl"
+      :href="proofImageUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="admin-pod-open-link"
+    >
+      Open Full Image ↗
+    </a>
+  </div>
+
+  <div v-else class="admin-pod-empty">
+    <template v-if="order.status === 'delivered'">
+      Order delivered, but no proof was uploaded.
+    </template>
+
+    <template v-else>
+      No delivery proof available yet.
+    </template>
+  </div>
+</div>
+            
           </div>
         </article>
 
