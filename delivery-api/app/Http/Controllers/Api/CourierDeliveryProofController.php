@@ -56,10 +56,6 @@ class CourierDeliveryProofController extends Controller
     abort(422, 'Delivery proof already exists.');
 }
 
-if ($order->deliveryProof()->exists()) {
-    abort(422, 'Delivery proof already exists.');
-}
-
 if ($order->status !== 'in_transit') {
     abort(
         422,
@@ -94,11 +90,11 @@ if ($order->status !== 'in_transit') {
                 return $order;
             });
         } catch (Throwable $exception) {
-            if ($photoPath) {
-                Storage::disk('public')->delete($photoPath);
-            }
+    if ($photoPath) {
+        Storage::disk('local')->delete($photoPath);
+    }
 
-            throw $exception;
+    throw $exception;
         }
 
         $order->load([

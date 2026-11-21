@@ -36,7 +36,7 @@ class OrderLifecycleTest extends TestCase
             'password' => Hash::make('password'),
             'role_id' => $role->id,
             'availability_status' => 'available',
-                         'is_active' => true,
+            'is_active' => true,
         ]);
 
         $user->save();
@@ -205,7 +205,7 @@ class OrderLifecycleTest extends TestCase
 
     public function test_courier_can_upload_proof_and_deliver_order(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $customer = $this->createUser('customer');
         $courier = $this->createUser('courier');
@@ -246,14 +246,12 @@ class OrderLifecycleTest extends TestCase
 
         $proof = $order->deliveryProof()->firstOrFail();
 
-        Storage::disk('public')->assertExists(
-            $proof->photo_path
-        );
+        Storage::disk('local')->assertExists($proof->photo_path);
     }
 
     public function test_courier_cannot_upload_proof_before_in_transit(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $customer = $this->createUser('customer');
         $courier = $this->createUser('courier');
@@ -282,13 +280,13 @@ class OrderLifecycleTest extends TestCase
 
         $this->assertSame(
             [],
-            Storage::disk('public')->allFiles('delivery-proofs')
+            Storage::disk('local')->allFiles('delivery-proofs')
         );
     }
 
     public function test_courier_cannot_upload_duplicate_delivery_proof(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $customer = $this->createUser('customer');
         $courier = $this->createUser('courier');
@@ -314,7 +312,7 @@ class OrderLifecycleTest extends TestCase
 
         $this->assertCount(
             1,
-            Storage::disk('public')->allFiles('delivery-proofs')
+            Storage::disk('local')->allFiles('delivery-proofs')
         );
 
         $this->assertDatabaseHas('orders', [
@@ -322,104 +320,119 @@ class OrderLifecycleTest extends TestCase
             'status' => 'delivered',
         ]);
     }
-  public function test_courier_cannot_upload_non_image_proof(): void
-{
-    Storage::fake('public');
 
-    $customer = $this->createUser('customer');
-    $courier = $this->createUser('courier');
-    $order = $this->createOrder($customer, $courier, 'in_transit');
+    public function test_courier_cannot_upload_non_image_proof(): void
+    {
+        Storage::fake('local');
 
-    Sanctum::actingAs($courier);
+        $customer = $this->createUser('customer');
+        $courier = $this->createUser('courier');
 
-    $response = $this->postJson(
-        "/api/courier/orders/{$order->id}/proof",
-        [
-            'photo' => UploadedFile::fake()->create(
-                'document.pdf',
-                100,
-                'application/pdf'
-            ),
-            'recipient_name' => 'Recipient Test',
-        ]
-    );
+        $order = $this->createOrder(
+            $customer,
+            $courier,
+            'in_transit'
+        );
 
-    $response->assertUnprocessable()
-        ->assertJsonValidationErrors('photo');
+        Sanctum::actingAs($courier);
 
-    $this->assertDatabaseCount('delivery_proofs', 0);
+        $response = $this->postJson(
+            "/api/courier/orders/{$order->id}/proof",
+            [
+                'photo' => UploadedFile::fake()->create(
+                    'document.pdf',
+                    100,
+                    'application/pdf'
+                ),
+                'recipient_name' => 'Recipient Test',
+            ]
+        );
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors('photo');
+
+        $this->assertDatabaseCount('delivery_proofs', 0);
+    }
+
+    public function test_courier_cannot_upload_proof_larger_than_5mb(): void
+    {
+        Storage::fake('local');
+
+        $customer = $this->createUser('customer');
+        $courier = $this->createUser('courier');
+
+        $order = $this->createOrder(
+            $customer,
+            $courier,
+            'in_transit'
+        );
+
+        Sanctum::actingAs($courier);
+
+        $response = $this->post(
+            "/api/courier/orders/{$order->id}/proof",
+            [
+                'photo' => UploadedFile::fake()->create(
+                    'proof.jpg',
+                    5121,
+                    'image/jpeg'
+                ),
+                'recipient_name' => 'Recipient Test',
+            ],
+            ['Accept' => 'application/json']
+        );
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors('photo');
+
+        $this->assertDatabaseCount('delivery_proofs', 0);
+    }
+
+    public function test_courier_cannot_upload_proof_for_another_couriers_order(): void
+    {
+        Storage::fake('local');
+
+        $customer = $this->createUser('customer');
+        $ownerCourier = $this->createUser('courier');
+        $otherCourier = $this->createUser('courier');
+
+        $order = $this->createOrder(
+            $customer,
+            $ownerCourier,
+            'in_transit'
+        );
+
+        Sanctum::actingAs($otherCourier);
+
+        $response = $this->uploadProof($order->id);
+
+        $response->assertNotFound();
+
+        $this->assertDatabaseCount('delivery_proofs', 0);
+
+        $this->assertSame(
+            [],
+            Storage::disk('local')->allFiles('delivery-proofs')
+        );
+    }
+
+    public function test_guest_cannot_upload_delivery_proof(): void
+    {
+        Storage::fake('local');
+
+        $customer = $this->createUser('customer');
+        $courier = $this->createUser('courier');
+
+        $order = $this->createOrder(
+            $customer,
+            $courier,
+            'in_transit'
+        );
+
+        $response = $this->uploadProof($order->id);
+
+        $response->assertUnauthorized();
+
+        $this->assertDatabaseCount('delivery_proofs', 0);
+    }
 }
-
-public function test_courier_cannot_upload_proof_larger_than_5mb(): void
-{
-    Storage::fake('public');
-
-    $customer = $this->createUser('customer');
-    $courier = $this->createUser('courier');
-    $order = $this->createOrder($customer, $courier, 'in_transit');
-
-    Sanctum::actingAs($courier);
-
-    $response = $this->post(
-        "/api/courier/orders/{$order->id}/proof",
-        [
-            'photo' => UploadedFile::fake()->create(
-                'proof.jpg',
-                5121,
-                'image/jpeg'
-            ),
-            'recipient_name' => 'Recipient Test',
-        ],
-        ['Accept' => 'application/json']
-    );
-
-    $response->assertUnprocessable()
-        ->assertJsonValidationErrors('photo');
-
-    $this->assertDatabaseCount('delivery_proofs', 0);
-}
-
-public function test_courier_cannot_upload_proof_for_another_couriers_order(): void
-{
-    Storage::fake('public');
-
-    $customer = $this->createUser('customer');
-    $ownerCourier = $this->createUser('courier');
-    $otherCourier = $this->createUser('courier');
-
-    $order = $this->createOrder(
-        $customer,
-        $ownerCourier,
-        'in_transit'
-    );
-
-    Sanctum::actingAs($otherCourier);
-
-    $response = $this->uploadProof($order->id);
-
-    $response->assertNotFound();
-
-    $this->assertDatabaseCount('delivery_proofs', 0);
-
-    $this->assertSame(
-        [],
-        Storage::disk('public')->allFiles('delivery-proofs')
-    );
-}
-
-public function test_guest_cannot_upload_delivery_proof(): void
-{
-    Storage::fake('public');
-
-    $customer = $this->createUser('customer');
-    $courier = $this->createUser('courier');
-    $order = $this->createOrder($customer, $courier, 'in_transit');
-
-    $response = $this->uploadProof($order->id);
-
-    $response->assertUnauthorized();
-
-    $this->assertDatabaseCount('delivery_proofs', 0);
-}
-}
-
