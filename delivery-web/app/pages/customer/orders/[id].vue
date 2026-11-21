@@ -81,6 +81,13 @@ interface OrderResponse {
 const route = useRoute()
 const api = useApi()
 
+  const {
+  imageUrl: proofImageUrl,
+  loading: proofImageLoading,
+  error: proofImageError,
+  loadImage: loadProofImage,
+  clearImage: clearProofImage
+} = usePrivateImage()
 const nuxtApp = useNuxtApp() as any
 const echo = nuxtApp.$echo
 const reverbStatus = nuxtApp.$reverbStatus
@@ -264,6 +271,15 @@ const fetchOrder = async () => {
     if (!order.value || !order.value.id) {
       throw new Error('Invalid order response')
     }
+
+    if (order.value.delivery_proof?.photo_url) {
+      await loadProofImage(
+        order.value.delivery_proof.photo_url
+      )
+    } else {
+      clearProofImage()
+    }
+
     startTracking()
   } catch (error: any) {
     order.value = null
@@ -621,16 +637,25 @@ onMounted(() => {
 
         <div class="pod-image-wrapper">
           <a
-            :href="order.delivery_proof.photo_url"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              :src="order.delivery_proof.photo_url"
-              alt="Delivery proof photo"
-              class="pod-image"
-            />
-          </a>
+  v-if="proofImageUrl"
+  :href="proofImageUrl"
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  <img
+    :src="proofImageUrl"
+    alt="Delivery proof photo"
+    class="pod-image"
+  />
+</a>
+
+<p v-else-if="proofImageLoading">
+  Loading delivery proof...
+</p>
+
+<p v-else-if="proofImageError">
+  {{ proofImageError }}
+</p>
           <p class="pod-image-caption">
             Tap image to view full size
           </p>

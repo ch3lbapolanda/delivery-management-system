@@ -79,6 +79,14 @@ interface OrderResponse {
 const route = useRoute()
 const api = useApi()
 
+const {
+  imageUrl: proofImageUrl,
+  loading: proofImageLoading,
+  error: proofImageError,
+  loadImage: loadProofImage,
+  clearImage: clearProofImage
+} = usePrivateImage()
+
 const order = ref<Order | null>(null)
 const loading = ref(true)
 const updating = ref(false)
@@ -210,6 +218,15 @@ const fetchOrder = async () => {
       ...response.data,
       eta: response.eta
     }
+
+    if (response.data.delivery_proof?.photo_url) {
+      await loadProofImage(
+        response.data.delivery_proof.photo_url
+      )
+    } else {
+      clearProofImage()
+    }
+
     syncGpsTracking()
   } catch (err: any) {
     error.value =
@@ -217,8 +234,8 @@ const fetchOrder = async () => {
   } finally {
     loading.value = false
   }
-}
 
+}
 const nextStatus: Record<string, string> = {
   assigned: 'picked_up',
   picked_up: 'in_transit'
@@ -1019,10 +1036,19 @@ onUnmounted(() => {
           rel="noopener noreferrer"
         >
           <img
-            :src="order.delivery_proof.photo_url"
-            alt="Delivery proof photo"
-            class="proof-result-image"
-          />
+  v-if="proofImageUrl"
+  :src="proofImageUrl"
+  alt="Delivery proof photo"
+  class="proof-result-image"
+/>
+
+<p v-else-if="proofImageLoading">
+  Loading delivery proof...
+</p>
+
+<p v-else-if="proofImageError">
+  {{ proofImageError }}
+</p>
         </a>
 
         <div class="courier-info-row">

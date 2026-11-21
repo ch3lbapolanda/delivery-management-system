@@ -90,6 +90,13 @@ interface CourierResponse {
 
 const route = useRoute()
 const api = useApi()
+  const {
+  imageUrl: proofImageUrl,
+  loading: proofImageLoading,
+  error: proofImageError,
+  loadImage: loadProofImage,
+  clearImage: clearProofImage
+} = usePrivateImage()
 
 const nuxtApp = useNuxtApp() as any
 const echo = nuxtApp.$echo
@@ -153,6 +160,15 @@ const fetchOrder = async () => {
       ...response.data,
       eta: response.eta
     }
+
+    if (response.data.delivery_proof?.photo_url) {
+      await loadProofImage(
+        response.data.delivery_proof.photo_url
+      )
+    } else {
+      clearProofImage()
+    }
+
     startTracking()
   } catch (err: any) {
     error.value =
@@ -745,10 +761,19 @@ onBeforeUnmount(() => {
             rel="noopener noreferrer"
           >
             <img
-              :src="order.delivery_proof.photo_url"
-              alt="Delivery proof photo"
-              class="dispatcher-pod-image"
-            />
+  v-if="proofImageUrl"
+  :src="proofImageUrl"
+  alt="Delivery proof photo"
+  class="dispatcher-pod-image"
+/>
+
+<p v-else-if="proofImageLoading">
+  Loading delivery proof...
+</p>
+
+<p v-else-if="proofImageError">
+  {{ proofImageError }}
+</p>
           </a>
 
           <p class="dispatcher-pod-caption">
