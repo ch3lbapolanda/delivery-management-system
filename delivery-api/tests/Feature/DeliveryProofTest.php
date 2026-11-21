@@ -194,4 +194,44 @@ class DeliveryProofTest extends TestCase
             "/api/orders/{$order->id}/proof/photo"
         )->assertUnauthorized();
     }
+  public function test_inactive_user_cannot_view_delivery_proof(): void
+{
+    Storage::fake('local');
+
+    $order = $this->createProofOrder(
+        $this->createUser('customer'),
+        $this->createUser('courier')
+    );
+
+    $user = $this->createUser('customer');
+    $user->update(['is_active' => false]);
+
+    Sanctum::actingAs($user);
+
+    $this->get(
+        "/api/orders/{$order->id}/proof/photo"
+    )->assertForbidden();
+}
+
+public function test_missing_delivery_proof_file_returns_not_found(): void
+{
+    Storage::fake('local');
+
+    $order = $this->createProofOrder(
+        $this->createUser('customer'),
+        $this->createUser('courier')
+    );
+
+    Storage::disk('local')->delete(
+        'delivery-proofs/test-proof.jpg'
+    );
+
+    Sanctum::actingAs(
+        $this->createUser('admin')
+    );
+
+    $this->get(
+        "/api/orders/{$order->id}/proof/photo"
+    )->assertNotFound();
+}
 }
