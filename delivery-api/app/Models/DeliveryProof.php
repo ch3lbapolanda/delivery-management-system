@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class DeliveryProof extends Model
 {
@@ -32,6 +33,7 @@ class DeliveryProof extends Model
 
     public function getPhotoUrlAttribute(): string
     {
-        return Storage::disk('public')->url($this->photo_path);
+        return url('/api/orders/' . $this->order_id . '/proof/photo');
     }
 }
+

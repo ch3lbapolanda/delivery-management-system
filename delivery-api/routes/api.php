@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\OrderTrackingController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\AdminUserController;
+use App\Http\Controllers\Api\DeliveryProofController;
 
 
 
@@ -34,6 +35,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     // Authentication
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+  Route::get('/orders/{id}/proof/photo', [
+    DeliveryProofController::class,
+    'show',
+])->name('orders.proof.photo');
 
     // ======================================
     // NOTIFICATIONS

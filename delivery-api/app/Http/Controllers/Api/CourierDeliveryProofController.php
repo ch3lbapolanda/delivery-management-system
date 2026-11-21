@@ -38,8 +38,7 @@ class CourierDeliveryProofController extends Controller
         $photoPath = null;
 
         try {
-            $photoPath = $request->file('photo')
-                ->store('delivery-proofs', 'public');
+            $photoPath = $request->file('photo')->store('delivery-proofs', 'local');
 
             $order = DB::transaction(function () use (
                 $request,

@@ -14,20 +14,27 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withBroadcasting(
-    __DIR__.'/../routes/channels.php',
-    [
-        'prefix' => 'api',
-        'middleware' => ['api', 'auth:sanctum', 'active'],
-    ],
-)
+        __DIR__.'/../routes/channels.php',
+        [
+            'prefix' => 'api',
+            'middleware' => ['api', 'auth:sanctum', 'active'],
+        ],
+    )
     ->withMiddleware(function (Middleware $middleware): void {
-    $middleware->alias([
-        'role' => \App\Http\Middleware\RoleMiddleware::class,
-        'active' => \App\Http\Middleware\EnsureUserIsActive::class,
-                       ]);
+        $middleware->alias([
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+        ]);
+
+        $middleware->redirectGuestsTo(
+            fn (Request $request) => null
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+            fn (Request $request) =>
+                $request->is('api/*') || $request->expectsJson(),
         );
-    })->create();
+    })
+    ->create();
+
